@@ -1,0 +1,14 @@
+[
+  {"stage": 1, "part_number": "4137321", "blade_count": 20, "description": "Stage 1 Rotor Assy"},
+  {"stage": 1, "part_number": "4135411", "blade_count": 20, "description": "Stage 1 Rotor Assy"},
+  {"stage": 1, "part_number": "4134621", "blade_count": 20, "description": "Stage 1 Rotor"},
+  {"stage": 2, "part_number": "4130812", "blade_count": 38, "description": "Stage 2 Rotor"},
+  {"stage": 3, "part_number": "4134613", "blade_count": 55, "description": "Stage 3 Rotor"},
+  {"stage": 3, "part_number": "4130813", "blade_count": 55, "description": "Stage 3 Rotor"},
+  {"stage": 4, "part_number": "4119904", "blade_count": 42, "description": "Stage 4 Rotor"},
+  {"stage": 5, "part_number": "4119905", "blade_count": 54, "description": "Stage 5 Rotor"},
+  {"stage": 6, "part_number": "4133006", "blade_count": 70, "description": "Stage 6 Rotor"},
+  {"stage": 7, "part_number": "4136007", "blade_count": 82, "description": "Stage 7 Rotor"},
+  {"stage": 8, "part_number": "4133008", "blade_count": 96, "description": "Stage 8 Rotor"},
+  {"stage": 9, "part_number": "4131129-01", "blade_count": 110, "description": "Stage 9 Rotor Assy"}
+]

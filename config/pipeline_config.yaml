@@ -1,0 +1,69 @@
+reparable_limits_path: "config/reparable_limits.json"
+rotor_config_path: "config/rotor_configurations.json"
+
+data_preparation:
+  min_points: 10000
+  max_points: 20000000
+  voxel_size_mm: 0.5
+  statistical_outlier_neighbors: 20
+  statistical_outlier_std: 2.5
+  normal_radius_mm: 2.0
+  normal_max_nn: 30
+
+registration:
+  fpfh_radius_mm: 25.0
+  fpfh_max_nn: 100
+  ransac_distance_mm: 5.0
+  ransac_n: 3
+  ransac_max_iter: 4000000
+  ransac_confidence: 0.999
+  icp_max_correspondence_mm: 1.0
+  icp_max_iter: 200
+  max_acceptable_rmse_mm: 0.05
+
+deviation_analysis:
+  threshold_mm: -0.010
+  scanner_precision_mm: 0.005
+
+foil_segmentation:
+  dbscan_eps_mm: 2.0
+  dbscan_min_samples: 10
+  angular_resolution_deg: 1.0
+
+defect_clustering:
+  dbscan_eps_mm: 1.0
+  dbscan_min_samples: 3
+  min_cluster_size: 3
+
+measurement:
+  edge_distance_threshold_inches: 0.080
+  precision_inches: 0.001
+
+zone_classification:
+  zones:
+    - {id: "LE_TIP", name: "Leading Edge Tip", priority: 1, type: "edge_le", edge: "LE", severity: "CRITICAL", max_depth_in: 0.005, max_length_in: 0.030, span_start_pct: 90.0, span_end_pct: 100.0}
+    - {id: "TE_TIP", name: "Trailing Edge Tip", priority: 2, type: "edge_te", edge: "TE", severity: "CRITICAL", max_depth_in: 0.005, max_length_in: 0.030, span_start_pct: 90.0, span_end_pct: 100.0}
+    - {id: "A1", name: "LE Critical", priority: 3, type: "edge_le", edge: "LE", severity: "CRITICAL", max_depth_in: 0.003, max_length_in: 0.020, span_start_pct: 0.0, span_end_pct: 3.83}
+    - {id: "A2", name: "LE Mid", priority: 4, type: "edge_le", edge: "LE", severity: "HIGH", max_depth_in: 0.005, max_length_in: 0.040, span_start_pct: 3.83, span_end_pct: 62.88}
+    - {id: "A3", name: "LE Outer", priority: 5, type: "edge_le", edge: "LE", severity: "HIGH", max_depth_in: 0.008, max_length_in: 0.060, span_start_pct: 62.88, span_end_pct: 99.77}
+    - {id: "B1", name: "TE Critical", priority: 6, type: "edge_te", edge: "TE", severity: "CRITICAL", max_depth_in: 0.003, max_length_in: 0.020, span_start_pct: 0.0, span_end_pct: 3.83}
+    - {id: "B2", name: "TE Outer", priority: 7, type: "edge_te", edge: "TE", severity: "HIGH", max_depth_in: 0.006, max_length_in: 0.050, span_start_pct: 3.83, span_end_pct: 60.95}
+    - {id: "C1", name: "Convex Surface", priority: 8, type: "surface", severity: "STANDARD", max_depth_in: 0.010, max_length_in: 0.080}
+    - {id: "C2", name: "Concave Surface", priority: 9, type: "surface", severity: "STANDARD", max_depth_in: 0.010, max_length_in: 0.080}
+    - {id: "D1", name: "Platform LE", priority: 10, type: "surface", severity: "STANDARD", max_depth_in: 0.015, max_length_in: 0.100}
+    - {id: "D2", name: "Platform TE", priority: 11, type: "surface", severity: "STANDARD", max_depth_in: 0.015, max_length_in: 0.100}
+    - {id: "E1", name: "Root Fillet", priority: 12, type: "fillet", severity: "STANDARD", max_depth_in: 0.008, max_length_in: 0.060}
+    - {id: "E2", name: "Tip Region", priority: 13, type: "tip", severity: "STANDARD", max_depth_in: 0.010, max_length_in: 0.080}
+  multi_zone_rule: "most_restrictive"
+  edge_distance_threshold_inches: 0.080
+
+output:
+  format: "excel"
+  include_json: true
+  disposition_tiers: ["SERVICEABLE", "BLEND", "REPLACE"]
+  defect_types: ["nick", "dent", "crack", "FOD", "erosion", "scratch", "gouge"]
+
+performance:
+  target_time_per_ibr_seconds: 90
+  max_time_per_ibr_seconds: 900
+  parallel_processing: true
