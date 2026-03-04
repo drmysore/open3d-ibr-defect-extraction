@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Viewer — IBR Defect Extraction</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root { --bg:#0a0e17;--surface:#131a2b;--surface2:#1a2338;--border:#2a3654;--text:#e2e8f0;--text-muted:#8892a4;--accent:#3b82f6; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:24px}
+  .topbar h1{font-size:18px;font-weight:700}.topbar h1 span{color:var(--accent)}
+  .topbar nav{display:flex;gap:16px;margin-left:auto}
+  .topbar nav a{color:var(--text-muted);font-size:13px;font-weight:500;padding:6px 14px;border-radius:6px;transition:all .15s}
+  .topbar nav a:hover,.topbar nav a.active{color:var(--text);background:var(--surface2);text-decoration:none}
+  .toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 32px;display:flex;align-items:center;gap:12px}
+  .toolbar label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .toolbar select,.toolbar input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:13px}
+  .btn{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s}
+  .btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:#2563eb}
+  .btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  #viewer{flex:1;width:100%}
+  #status-bar{background:var(--surface);border-top:1px solid var(--border);padding:8px 32px;font-size:12px;color:var(--text-muted);display:flex;gap:24px}
+  #loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);display:none;flex-direction:column;align-items:center;gap:12px;z-index:100}
+  #loading.show{display:flex}
+  .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span>IBR</span> Defect Extraction System</h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/viewer3d" class="active">3D Viewer</a>
+    <a href="/reports">Reports</a>
+  </nav>
+</div>
+
+<div class="toolbar">
+  <label>View:</label>
+  <select id="view-mode" onchange="switchView()">
+    <option value="deviations">Deviation Heatmap</option>
+    <option value="scan">Scan Point Cloud</option>
+    <option value="cad">CAD Reference</option>
+    <option value="defects">Defect Clusters</option>
+  </select>
+  <label style="margin-left:16px">Point Size:</label>
+  <input type="range" id="pt-size" min="1" max="8" value="2" oninput="updatePointSize()">
+  <label style="margin-left:16px">Max Points:</label>
+  <select id="max-pts" onchange="switchView()">
+    <option value="10000">10K</option>
+    <option value="30000" selected>30K</option>
+    <option value="50000">50K</option>
+  </select>
+  <button class="btn btn-outline" style="margin-left:auto" onclick="resetCamera()">Reset Camera</button>
+</div>
+
+<div id="loading"><div class="spinner"></div><span style="color:var(--text);font-size:13px" id="load-msg">Loading...</span></div>
+<div id="viewer"></div>
+
+<div id="status-bar">
+  <span id="sb-points">Points: -</span>
+  <span id="sb-range">Range: -</span>
+  <span id="sb-mode">Mode: Deviation Heatmap</span>
+</div>
+
+<script>
+let currentData = null;
+
+function showLoading(msg) {
+  document.getElementById('load-msg').textContent = msg || 'Loading...';
+  document.getElementById('loading').classList.add('show');
+}
+function hideLoading() { document.getElementById('loading').classList.remove('show'); }
+
+function layout3d(title) {
+  return {
+    paper_bgcolor:'#0a0e17',plot_bgcolor:'#0a0e17',
+    font:{color:'#e2e8f0',family:'Segoe UI,system-ui,sans-serif'},
+    margin:{t:0,b:0,l:0,r:0},
+    scene:{
+      bgcolor:'#0a0e17',
+      xaxis:{title:'X (mm)',gridcolor:'#1a2338',color:'#8892a4',showbackground:false},
+      yaxis:{title:'Y (mm)',gridcolor:'#1a2338',color:'#8892a4',showbackground:false},
+      zaxis:{title:'Z (mm)',gridcolor:'#1a2338',color:'#8892a4',showbackground:false},
+      camera:{eye:{x:1.5,y:1.5,z:0.8}},
+      aspectmode:'data',
+    },
+  };
+}
+
+function switchView() {
+  const mode = document.getElementById('view-mode').value;
+  document.getElementById('sb-mode').textContent = 'Mode: ' + document.getElementById('view-mode').selectedOptions[0].text;
+  if (mode === 'deviations') loadDeviations();
+  else if (mode === 'scan') loadCloud('scan');
+  else if (mode === 'cad') loadCloud('cad');
+  else if (mode === 'defects') loadDefects();
+}
+
+function loadDeviations() {
+  showLoading('Computing deviations...');
+  fetch('/api/pointcloud/deviations').then(r=>r.json()).then(data=>{
+    currentData = data;
+    const pts=data.points, devs=data.deviations;
+    const x=pts.map(p=>p[0]),y=pts.map(p=>p[1]),z=pts.map(p=>p[2]);
+    const sz = +document.getElementById('pt-size').value;
+    Plotly.newPlot('viewer',[{
+      x,y,z,mode:'markers',type:'scatter3d',
+      marker:{size:sz,color:devs,colorscale:[[0,'#3b82f6'],[0.35,'#22c55e'],[0.5,'#4ade80'],[0.65,'#f59e0b'],[1,'#ef4444']],
+        colorbar:{title:'Dev (mm)',thickness:15,len:0.5,tickfont:{color:'#e2e8f0'},titlefont:{color:'#e2e8f0'}},
+        cmin:Math.min(...devs),cmax:Math.max(...devs)},
+      hovertemplate:'X:%{x:.1f} Y:%{y:.1f} Z:%{z:.1f}<br>Dev:%{marker.color:.4f}mm<extra></extra>',
+    }],layout3d(),{responsive:true});
+    updateStatus(pts.length, devs);
+    hideLoading();
+  }).catch(e=>{hideLoading();alert(e)});
+}
+
+function loadCloud(type) {
+  showLoading('Loading ' + type + ' cloud...');
+  fetch('/api/pointcloud/' + type).then(r=>r.json()).then(data=>{
+    const pts=data.points;
+    const x=pts.map(p=>p[0]),y=pts.map(p=>p[1]),z=pts.map(p=>p[2]);
+    const col = type === 'cad' ? '#3b82f6' : '#22c55e';
+    const sz = +document.getElementById('pt-size').value;
+    Plotly.newPlot('viewer',[{
+      x,y,z,mode:'markers',type:'scatter3d',
+      marker:{size:sz,color:col,opacity:0.7},
+      hovertemplate:'X:%{x:.1f} Y:%{y:.1f} Z:%{z:.1f}<extra></extra>',
+    }],layout3d(),{responsive:true});
+    document.getElementById('sb-points').textContent='Points: '+pts.length.toLocaleString();
+    document.getElementById('sb-range').textContent='';
+    hideLoading();
+  }).catch(e=>{hideLoading();alert(e)});
+}
+
+function loadDefects() {
+  showLoading('Loading defects...');
+  fetch('/api/report/latest').then(r=>r.json()).then(report=>{
+    const traces = [];
+    const palette=['#ef4444','#3b82f6','#f59e0b','#a855f7','#06b6d4','#ec4899'];
+    report.defects.forEach((d,i)=>{
+      if(!d.points||d.points.length===0) return;
+      const x=d.points.map(p=>p[0]),y=d.points.map(p=>p[1]),z=d.points.map(p=>p[2]);
+      traces.push({
+        x,y,z,mode:'markers',type:'scatter3d',name:d.defect_id+' ('+d.disposition+')',
+        marker:{size:4,color:palette[i%palette.length]},
+        hovertemplate:d.defect_id+'<br>Depth:'+((d.depth_in||0)*1000).toFixed(1)+' mil<br>%{x:.1f},%{y:.1f},%{z:.1f}<extra></extra>',
+      });
+    });
+    if(traces.length===0){hideLoading();alert('No defect point data');return;}
+    Plotly.newPlot('viewer',traces,{...layout3d(),showlegend:true,legend:{font:{color:'#e2e8f0',size:11},bgcolor:'rgba(19,26,43,0.8)'}},{responsive:true});
+    document.getElementById('sb-points').textContent='Defects: '+report.defects.length;
+    document.getElementById('sb-range').textContent='Disposition: '+report.overall_disposition;
+    hideLoading();
+  }).catch(e=>{hideLoading();alert(e)});
+}
+
+function updatePointSize() {
+  const sz = +document.getElementById('pt-size').value;
+  Plotly.restyle('viewer',{'marker.size':sz});
+}
+function resetCamera() {
+  Plotly.relayout('viewer',{'scene.camera':{eye:{x:1.5,y:1.5,z:0.8}}});
+}
+function updateStatus(count, devs) {
+  document.getElementById('sb-points').textContent='Points: '+count.toLocaleString();
+  if(devs){
+    const mn=Math.min(...devs).toFixed(4), mx=Math.max(...devs).toFixed(4);
+    document.getElementById('sb-range').textContent='Range: ['+mn+', '+mx+'] mm';
+  }
+}
+
+switchView();
+</script>
+</body>
+</html>

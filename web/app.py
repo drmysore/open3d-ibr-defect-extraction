@@ -1,0 +1,250 @@
+"""FastAPI web application for IBR Defect Extraction System.
+
+Interactive dashboard with 3D point cloud visualization,
+defect reports, zone analysis, and pipeline execution.
+"""
+
+import os
+import sys
+import json
+import glob
+import time
+import threading
+import numpy as np
+from pathlib import Path
+from datetime import datetime
+
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+sys.path.insert(0, str(PROJECT_ROOT / "src" / "utils"))
+
+app = FastAPI(title="IBR Defect Extraction System", version="1.0.0")
+
+TEMPLATES_DIR = Path(__file__).parent / "templates"
+STATIC_DIR = Path(__file__).parent / "static"
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+pipeline_status = {"running": False, "progress": "", "last_result": None}
+
+
+def _load_latest_report():
+    output_dir = PROJECT_ROOT / "output"
+    json_files = sorted(output_dir.glob("*.json"), key=os.path.getmtime, reverse=True)
+    if not json_files:
+        return None
+    with open(json_files[0]) as f:
+        return json.load(f)
+
+
+def _load_ply_points(ply_path, max_points=50000):
+    """Load points from PLY file using the compat layer."""
+    from o3d_compat import read_point_cloud
+    pcd = read_point_cloud(str(ply_path))
+    pts = pcd.points
+    if len(pts) > max_points:
+        idx = np.random.choice(len(pts), max_points, replace=False)
+        pts = pts[idx]
+    return (pts * 1000.0).tolist()
+
+
+def _compute_deviations_for_viz(scan_path, cad_path, max_points=30000):
+    """Compute deviations between scan and CAD for visualization."""
+    from o3d_compat import read_point_cloud
+    from scipy.spatial import cKDTree
+
+    scan_pcd = read_point_cloud(str(scan_path))
+    cad_pcd = read_point_cloud(str(cad_path))
+
+    scan_pts = scan_pcd.points * 1000.0
+    cad_pts = cad_pcd.points * 1000.0
+
+    if len(scan_pts) > max_points:
+        idx = np.random.choice(len(scan_pts), max_points, replace=False)
+        scan_pts = scan_pts[idx]
+
+    cad_normals = cad_pcd.normals
+    if len(cad_normals) == 0:
+        cad_pcd.estimate_normals(k=30)
+        cad_normals = cad_pcd.normals
+
+    tree = cKDTree(cad_pts)
+    _, indices = tree.query(scan_pts, k=1, workers=-1)
+    diff = scan_pts - cad_pts[indices]
+    signed_dists = np.sum(diff * cad_normals[indices], axis=1)
+
+    return scan_pts.tolist(), signed_dists.tolist()
+
+
+# ----- HTML Pages -----
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    report = _load_latest_report()
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "report": report,
+        "has_report": report is not None,
+    })
+
+
+@app.get("/viewer3d", response_class=HTMLResponse)
+async def viewer_3d(request: Request):
+    return templates.TemplateResponse("viewer3d.html", {"request": request})
+
+
+@app.get("/reports", response_class=HTMLResponse)
+async def reports_page(request: Request):
+    output_dir = PROJECT_ROOT / "output"
+    reports = []
+    for f in sorted(output_dir.glob("*.json"), key=os.path.getmtime, reverse=True):
+        with open(f) as fh:
+            data = json.load(fh)
+        xlsx_path = f.with_suffix(".xlsx")
+        reports.append({
+            "filename": f.name,
+            "xlsx_exists": xlsx_path.exists(),
+            "xlsx_name": xlsx_path.name if xlsx_path.exists() else None,
+            "timestamp": data.get("timestamp", ""),
+            "part_number": data.get("part_number", ""),
+            "disposition": data.get("overall_disposition", ""),
+            "total_defects": data.get("total_defects", 0),
+        })
+    return templates.TemplateResponse("reports.html", {
+        "request": request,
+        "reports": reports,
+    })
+
+
+# ----- API Endpoints -----
+
+@app.get("/api/report/latest")
+async def api_latest_report():
+    report = _load_latest_report()
+    if not report:
+        raise HTTPException(404, "No reports found")
+    return report
+
+
+@app.get("/api/reports")
+async def api_list_reports():
+    output_dir = PROJECT_ROOT / "output"
+    reports = []
+    for f in sorted(output_dir.glob("*.json"), key=os.path.getmtime, reverse=True):
+        with open(f) as fh:
+            data = json.load(fh)
+        reports.append({
+            "filename": f.name,
+            "part_number": data.get("part_number"),
+            "disposition": data.get("overall_disposition"),
+            "total_defects": data.get("total_defects"),
+            "timestamp": data.get("timestamp"),
+        })
+    return reports
+
+
+@app.get("/api/report/{filename}")
+async def api_get_report(filename: str):
+    filepath = PROJECT_ROOT / "output" / filename
+    if not filepath.exists():
+        raise HTTPException(404, f"Report not found: {filename}")
+    with open(filepath) as f:
+        return json.load(f)
+
+
+@app.get("/api/download/{filename}")
+async def api_download_file(filename: str):
+    filepath = PROJECT_ROOT / "output" / filename
+    if not filepath.exists():
+        raise HTTPException(404, f"File not found: {filename}")
+    return FileResponse(str(filepath), filename=filename)
+
+
+@app.get("/api/pointcloud/scan")
+async def api_scan_points():
+    scan_path = PROJECT_ROOT / "data" / "sample_scan.ply"
+    if not scan_path.exists():
+        raise HTTPException(404, "Scan file not found")
+    points = _load_ply_points(scan_path, max_points=40000)
+    return {"points": points, "count": len(points)}
+
+
+@app.get("/api/pointcloud/cad")
+async def api_cad_points():
+    cad_path = PROJECT_ROOT / "data" / "cad_reference.ply"
+    if not cad_path.exists():
+        raise HTTPException(404, "CAD file not found")
+    points = _load_ply_points(cad_path, max_points=40000)
+    return {"points": points, "count": len(points)}
+
+
+@app.get("/api/pointcloud/deviations")
+async def api_deviations():
+    scan_path = PROJECT_ROOT / "data" / "sample_scan.ply"
+    cad_path = PROJECT_ROOT / "data" / "cad_reference.ply"
+    if not scan_path.exists() or not cad_path.exists():
+        raise HTTPException(404, "Data files not found")
+    points, deviations = _compute_deviations_for_viz(scan_path, cad_path, max_points=30000)
+    return {"points": points, "deviations": deviations, "count": len(points)}
+
+
+@app.get("/api/config")
+async def api_config():
+    config_path = PROJECT_ROOT / "config" / "pipeline_config.yaml"
+    import yaml
+    with open(config_path) as f:
+        return yaml.safe_load(f)
+
+
+@app.get("/api/rotor-configs")
+async def api_rotor_configs():
+    path = PROJECT_ROOT / "config" / "rotor_configurations.json"
+    with open(path) as f:
+        return json.load(f)
+
+
+@app.post("/api/pipeline/run")
+async def api_run_pipeline(background_tasks: BackgroundTasks):
+    if pipeline_status["running"]:
+        return {"status": "already_running", "progress": pipeline_status["progress"]}
+
+    def _run():
+        pipeline_status["running"] = True
+        pipeline_status["progress"] = "Starting pipeline..."
+        try:
+            os.chdir(str(PROJECT_ROOT))
+            from pipeline import run_pipeline
+            pipeline_status["progress"] = "Running 8-phase pipeline..."
+            result = run_pipeline(
+                ply_path="data/sample_scan.ply",
+                cad_path="data/cad_reference.ply",
+                part_number="4134613",
+                config_path="config/pipeline_config.yaml",
+            )
+            pipeline_status["last_result"] = result
+            pipeline_status["progress"] = "Complete"
+        except Exception as e:
+            pipeline_status["progress"] = f"Error: {e}"
+        finally:
+            pipeline_status["running"] = False
+
+    background_tasks.add_task(_run)
+    return {"status": "started"}
+
+
+@app.get("/api/pipeline/status")
+async def api_pipeline_status():
+    return pipeline_status
+
+
+if __name__ == "__main__":
+    import uvicorn
+    os.chdir(str(PROJECT_ROOT))
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

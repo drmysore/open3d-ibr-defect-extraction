@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — IBR Defect Extraction</title>
+<style>
+  :root{--bg:#0a0e17;--surface:#131a2b;--surface2:#1a2338;--border:#2a3654;--text:#e2e8f0;--text-muted:#8892a4;--accent:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:24px}
+  .topbar h1{font-size:18px;font-weight:700}.topbar h1 span{color:var(--accent)}
+  .topbar nav{display:flex;gap:16px;margin-left:auto}
+  .topbar nav a{color:var(--text-muted);font-size:13px;font-weight:500;padding:6px 14px;border-radius:6px;transition:all .15s}
+  .topbar nav a:hover,.topbar nav a.active{color:var(--text);background:var(--surface2);text-decoration:none}
+  .container{max-width:1200px;margin:0 auto;padding:24px 32px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+  .card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .card-header h2{font-size:14px;font-weight:600}
+  .card-body{padding:20px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{text-align:left;padding:10px 12px;color:var(--text-muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+  tbody td{padding:12px;border-bottom:1px solid rgba(42,54,84,.4)}
+  tbody tr:hover{background:rgba(59,130,246,.05)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  .badge-green{background:rgba(34,197,94,.15);color:var(--green)}
+  .badge-amber{background:rgba(245,158,11,.15);color:var(--amber)}
+  .badge-red{background:rgba(239,68,68,.15);color:var(--red)}
+  .btn{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
+  .btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:#2563eb}
+  .btn-ghost{background:transparent;color:var(--accent);border:1px solid var(--border)}
+  .btn-ghost:hover{border-color:var(--accent)}
+  .detail-panel{display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0}
+  .detail-panel.show{display:block}
+  pre{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:12px;max-height:400px;overflow:auto;white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span>IBR</span> Defect Extraction System</h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/viewer3d">3D Viewer</a>
+    <a href="/reports" class="active">Reports</a>
+  </nav>
+</div>
+
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <h2>Inspection Reports</h2>
+      <span style="color:var(--text-muted);font-size:12px">{{ reports|length }} report(s)</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      {% if reports %}
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th><th>Part Number</th><th>Defects</th>
+            <th>Disposition</th><th>Downloads</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in reports %}
+          <tr>
+            <td>{{ r.timestamp }}</td>
+            <td><strong>{{ r.part_number }}</strong></td>
+            <td>{{ r.total_defects }}</td>
+            <td>
+              {% if r.disposition == "SERVICEABLE" %}<span class="badge badge-green">{{ r.disposition }}</span>
+              {% elif r.disposition == "BLEND" %}<span class="badge badge-amber">{{ r.disposition }}</span>
+              {% else %}<span class="badge badge-red">{{ r.disposition }}</span>{% endif %}
+            </td>
+            <td>
+              <a href="/api/download/{{ r.filename }}" class="btn btn-ghost" style="margin-right:6px">JSON</a>
+              {% if r.xlsx_exists %}<a href="/api/download/{{ r.xlsx_name }}" class="btn btn-ghost">Excel</a>{% endif %}
+            </td>
+            <td>
+              <button class="btn btn-primary" onclick="toggleDetail('{{ r.filename }}')">View</button>
+            </td>
+          </tr>
+          <tr><td colspan="6" style="padding:0;border:none">
+            <div id="detail-{{ r.filename }}" class="detail-panel">
+              <pre id="json-{{ r.filename }}">Loading...</pre>
+            </div>
+          </td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="text-align:center;padding:40px;color:var(--text-muted)">
+        <p>No reports yet. Run the pipeline from the Dashboard.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleDetail(filename) {
+  const panel = document.getElementById('detail-' + filename);
+  const pre = document.getElementById('json-' + filename);
+  if (panel.classList.contains('show')) {
+    panel.classList.remove('show');
+    return;
+  }
+  panel.classList.add('show');
+  if (pre.textContent === 'Loading...') {
+    fetch('/api/report/' + filename)
+      .then(r => r.json())
+      .then(data => {
+        const clean = JSON.parse(JSON.stringify(data));
+        if (clean.defects) {
+          clean.defects.forEach(d => { delete d.points; delete d.deviations; });
+        }
+        pre.textContent = JSON.stringify(clean, null, 2);
+      })
+      .catch(e => { pre.textContent = 'Error: ' + e; });
+  }
+}
+</script>
+</body>
+</html>
