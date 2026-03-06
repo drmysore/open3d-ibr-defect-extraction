@@ -3,6 +3,8 @@ __pycache__/
 *.pyo
 .env
 .venv/
+env/
+venv/
 *.egg-info/
 dist/
 build/
@@ -10,3 +12,9 @@ build/
 .vscode/
 *.swp
 *.swo
+*.log
+.DS_Store
+Thumbs.db
+
+# Sprint 4: avoid committing large model binaries
+models/*.joblib

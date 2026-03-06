@@ -44,6 +44,26 @@ def _load_latest_report():
         return json.load(f)
 
 
+def _load_latest_sprint4_report():
+    """Return latest report that has sprint4 key (e.g. {part}_sprint4_analysis.json)."""
+    output_dir = PROJECT_ROOT / "output"
+    sprint4_files = sorted(
+        output_dir.glob("*_sprint4_analysis.json"),
+        key=os.path.getmtime,
+        reverse=True,
+    )
+    if sprint4_files:
+        with open(sprint4_files[0]) as f:
+            return json.load(f)
+    # Fallback: latest report with "sprint4" key
+    for f in sorted(output_dir.glob("*.json"), key=os.path.getmtime, reverse=True):
+        with open(f) as fh:
+            data = json.load(fh)
+        if data.get("sprint4"):
+            return data
+    return None
+
+
 def _load_ply_points(ply_path, max_points=50000):
     """Load points from PLY file using the compat layer."""
     from o3d_compat import read_point_cloud
@@ -242,6 +262,62 @@ async def api_run_pipeline(background_tasks: BackgroundTasks):
 @app.get("/api/pipeline/status")
 async def api_pipeline_status():
     return pipeline_status
+
+
+@app.get("/api/sprint4/report")
+async def api_sprint4_report():
+    """Return the latest Sprint 4 analysis JSON."""
+    report = _load_latest_sprint4_report()
+    if not report:
+        raise HTTPException(404, "No Sprint 4 report found")
+    return report
+
+
+@app.get("/api/2d-views")
+async def api_2d_views_list():
+    """Return list of generated 2D view filenames/paths under output/2d_views."""
+    views_dir = PROJECT_ROOT / "output" / "2d_views"
+    if not views_dir.exists():
+        return {"files": [], "base_path": str(views_dir)}
+    files = [f.name for f in views_dir.iterdir() if f.is_file()]
+    return {"files": sorted(files), "base_path": str(views_dir)}
+
+
+@app.get("/api/2d-views/{filename}")
+async def api_2d_view_file(filename: str):
+    """Serve image file from output/2d_views."""
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(400, "Invalid filename")
+    views_dir = PROJECT_ROOT / "output" / "2d_views"
+    filepath = views_dir / filename
+    if not filepath.exists() or not filepath.is_file():
+        raise HTTPException(404, f"2D view not found: {filename}")
+    return FileResponse(str(filepath), filename=filename)
+
+
+@app.get("/api/ml/metrics")
+async def api_ml_metrics():
+    """Return ML training metrics from models/training_metrics.json if it exists."""
+    metrics_path = PROJECT_ROOT / "models" / "training_metrics.json"
+    if not metrics_path.exists():
+        raise HTTPException(404, "Training metrics not found")
+    with open(metrics_path) as f:
+        return json.load(f)
+
+
+@app.get("/api/features/metadata")
+async def api_features_metadata():
+    """Return feature metadata JSON for latest inspection if exists."""
+    output_dir = PROJECT_ROOT / "output"
+    meta_files = sorted(
+        output_dir.glob("*_features_metadata.json"),
+        key=os.path.getmtime,
+        reverse=True,
+    )
+    if not meta_files:
+        raise HTTPException(404, "No feature metadata found")
+    with open(meta_files[0]) as f:
+        return json.load(f)
 
 
 if __name__ == "__main__":

@@ -168,6 +168,63 @@
     </div>
   </div>
 
+  {% if report.get("sprint4") %}
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-header">
+      <h2>Sprint 4</h2>
+      <a href="#" onclick="document.getElementById('sprint4-2d-list').style.display = document.getElementById('sprint4-2d-list').style.display === 'none' ? 'block' : 'none'; return false;" class="btn btn-sm btn-primary">2D Views</a>
+    </div>
+    <div class="card-body">
+      <h3 style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">ML Metrics</h3>
+      <div class="stats-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom:16px;">
+        <div class="stat-card">
+          <div class="label">Accuracy</div>
+          <div class="value" id="sprint4-accuracy">{{ "%.2f"|format((report.sprint4.ml_metrics.get("ensemble") or {}).get("accuracy", 0) * 100) }}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">AUC-ROC</div>
+          <div class="value" id="sprint4-auc">{{ "%.3f"|format((report.sprint4.ml_metrics.get("ensemble") or {}).get("auc_roc", 0)) }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">False Negative Rate</div>
+          <div class="value" id="sprint4-fnr">{{ "%.3f"|format((report.sprint4.ml_metrics.get("ensemble") or {}).get("false_negative_rate", 0)) }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">2D Views</div>
+          <div class="value" style="font-size:18px;"><a href="/api/2d-views" target="_blank">List</a></div>
+        </div>
+      </div>
+      <div id="sprint4-2d-list" style="display:none; margin-bottom:16px; padding:12px; background:var(--surface2); border-radius:8px;">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Generated 2D views (open in new tab):</div>
+        <div id="sprint4-2d-links"></div>
+      </div>
+      <h3 style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">Defect ML Predictions</h3>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Defect ID</th>
+              <th>Classified Type</th>
+              <th>ML Prediction</th>
+              <th>ML Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for d in report.defects %}
+            <tr>
+              <td><strong>{{ d.defect_id }}</strong></td>
+              <td>{{ d.get("classified_type", d.get("defect_type", "—")) }}</td>
+              <td>{{ d.get("ml_prediction", "—") }}</td>
+              <td>{% if d.get("ml_confidence") is not none and d.get("ml_confidence") != "" %}{{ "%.3f"|format(d.ml_confidence) }}{% else %}—{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="card" style="margin-bottom:24px">
     <div class="card-header">
       <h2>Defect Details</h2>
@@ -350,6 +407,21 @@ function runPipeline() {
 }
 
 load3DView();
+
+{% if report.get("sprint4") %}
+function load2dViewsList() {
+  var el = document.getElementById('sprint4-2d-links');
+  if (el.dataset.loaded) return;
+  fetch('/api/2d-views').then(function(r) { return r.json(); }).then(function(data) {
+    el.dataset.loaded = '1';
+    if (!data.files || data.files.length === 0) { el.innerHTML = '<span style="color:var(--text-muted)">No 2D views yet.</span>'; return; }
+    el.innerHTML = data.files.map(function(f) {
+      return '<a href="/api/2d-views/' + encodeURIComponent(f) + '" target="_blank" style="display:inline-block; margin:4px 12px 4px 0;">' + f + '</a>';
+    }).join('');
+  }).catch(function() { el.innerHTML = '<span style="color:var(--red)">Failed to load list.</span>'; });
+}
+document.getElementById('sprint4-2d-list') && document.querySelector('[onclick*="sprint4-2d-list"]') && document.querySelector('[onclick*="sprint4-2d-list"]').addEventListener('click', function() { load2dViewsList(); }, { once: true });
+{% endif %}
 </script>
 
 {% else %}

@@ -67,3 +67,15 @@ performance:
   target_time_per_ibr_seconds: 90
   max_time_per_ibr_seconds: 900
   parallel_processing: true
+
+sprint4:
+  feature_extraction:
+    output_dir: "output"
+  ml_classification:
+    model_dir: "models"
+    fn_weight: 2000
+  edge_extraction:
+    angular_bins: 360
+  conversion_2d:
+    output_dir: "output/2d_views"
+    resolution: 1024
