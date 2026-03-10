@@ -50,7 +50,7 @@ def _add_table(slide, headers, rows, x=0.5, y=1.4, w=9, h=2.2):
         c = tbl.cell(0, ci)
         c.text = hdr; c.fill.solid(); c.fill.fore_color.rgb = PRIMARY
         for p in c.text_frame.paragraphs:
-            p.alignment = PP_ALIGN.CENTER
+    p.alignment = PP_ALIGN.CENTER
             for r in p.runs:
                 r.font.color.rgb = WHITE; r.font.bold = True; r.font.size = Pt(10); r.font.name = "Arial"
     for ri, row in enumerate(rows):

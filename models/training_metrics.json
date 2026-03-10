@@ -1,0 +1,105 @@
+{
+  "random_forest": {
+    "accuracy": 1.0,
+    "auc_roc": 1.0,
+    "false_negative_rate": 0.0,
+    "confusion_matrix": [
+      [
+        301,
+        0
+      ],
+      [
+        0,
+        303
+      ]
+    ]
+  },
+  "gb_model_1": {
+    "accuracy": 0.9950331125827815,
+    "auc_roc": 0.9950166112956811,
+    "false_negative_rate": 0.0,
+    "confusion_matrix": [
+      [
+        298,
+        3
+      ],
+      [
+        0,
+        303
+      ]
+    ]
+  },
+  "gb_model_2": {
+    "accuracy": 0.9966887417218543,
+    "auc_roc": 0.9966777408637874,
+    "false_negative_rate": 0.0,
+    "confusion_matrix": [
+      [
+        299,
+        2
+      ],
+      [
+        0,
+        303
+      ]
+    ]
+  },
+  "ensemble": {
+    "accuracy": 1.0,
+    "auc_roc": 1.0,
+    "false_negative_rate": 0.0,
+    "confusion_matrix": [
+      [
+        301,
+        0
+      ],
+      [
+        0,
+        303
+      ]
+    ]
+  },
+  "top_features": [
+    {
+      "name": "depth_mm",
+      "importance": 0.3757486638888118
+    },
+    {
+      "name": "volume_mm3",
+      "importance": 0.07138328105648258
+    },
+    {
+      "name": "width_mm",
+      "importance": 0.06501442921145349
+    },
+    {
+      "name": "length_mm",
+      "importance": 0.054101614234326995
+    },
+    {
+      "name": "kurtosis_deviation",
+      "importance": 0.03872453468187156
+    },
+    {
+      "name": "area_mm2",
+      "importance": 0.035509078972947555
+    },
+    {
+      "name": "elongation",
+      "importance": 0.03390077627873181
+    },
+    {
+      "name": "num_defects_within_10mm",
+      "importance": 0.03365221320598775
+    },
+    {
+      "name": "compactness",
+      "importance": 0.03319008610480646
+    },
+    {
+      "name": "nearest_defect_dist_mm",
+      "importance": 0.03197939660608036
+    }
+  ],
+  "training_time_s": 6.41
+}
