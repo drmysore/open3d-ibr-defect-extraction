@@ -2,6 +2,12 @@
 
 Pratt & Whitney F135 | Hitachi Digital Services — 3D scan vs CAD deviation analysis and defect classification for integrally bladed rotors (IBR).
 
+## Run on another machine from scratch
+
+- **Do not copy** `venv/` or `.venv/` — create a new one on the new machine.
+- **See [SETUP_FROM_SCRATCH.md](SETUP_FROM_SCRATCH.md)** for step-by-step setup, activation, and run commands (Windows + Linux/macOS, both `venv` and `.venv`).
+- **Quick:** run `setup.bat` (Windows) or `./setup.sh` (Linux/macOS), then `python run_sprint4.py` and `python web/app.py`.
+
 ## Running the pipeline
 
 - **Demo (8-phase pipeline):**  
