@@ -320,6 +320,43 @@ async def api_features_metadata():
         return json.load(f)
 
 
+# ----- Phase Figure Endpoints -----
+
+@app.get("/phase-viewer", response_class=HTMLResponse)
+async def phase_viewer(request: Request):
+    return templates.TemplateResponse("phase_viewer.html", {"request": request})
+
+
+@app.get("/api/phases")
+async def api_phases_list():
+    viz_dir = PROJECT_ROOT / "output" / "visualizations"
+    if not viz_dir.exists():
+        return {"files": []}
+    files = sorted(f.name for f in viz_dir.iterdir() if f.suffix == ".json")
+    return {"files": files}
+
+
+@app.get("/api/phases/{phase}/figure")
+async def api_phase_figure(phase: int):
+    viz_dir = PROJECT_ROOT / "output" / "visualizations"
+    prefix = f"phase{phase}_"
+    for f in viz_dir.iterdir():
+        if f.name.startswith(prefix) and f.suffix == ".json":
+            with open(f) as fh:
+                return json.load(fh)
+    raise HTTPException(404, f"Phase {phase} figure JSON not found")
+
+
+@app.get("/api/phases/{phase}/html")
+async def api_phase_html(phase: int):
+    viz_dir = PROJECT_ROOT / "output" / "visualizations"
+    prefix = f"phase{phase}_"
+    for f in viz_dir.iterdir():
+        if f.name.startswith(prefix) and f.suffix == ".html":
+            return FileResponse(str(f), media_type="text/html", filename=f.name)
+    raise HTTPException(404, f"Phase {phase} HTML not found")
+
+
 if __name__ == "__main__":
     import uvicorn
     os.chdir(str(PROJECT_ROOT))

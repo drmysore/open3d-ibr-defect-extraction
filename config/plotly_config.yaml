@@ -1,0 +1,47 @@
+# Plotly 3D visualization parameters — IBR Defect Extraction
+# Preserves true geometry (aspectmode='data') for dense/overlapped blades
+
+visualization:
+  theme: plotly_dark
+  default_point_size: 1.5
+  defect_point_size: 3
+  centroid_marker_size: 10
+
+  # Downsampling for display (full resolution used in pipeline)
+  downsample:
+    raw_scan: 5
+    deviation: 3
+    segmentation: 5
+    clustering: 3
+    zone_map: 3
+    summary: 10
+
+  colormaps:
+    raw_scan: Viridis
+    deviation: RdYlGn_r
+    clustering: Rainbow
+    zone_map: custom
+
+  camera_presets:
+    top_down:
+      eye: { x: 0, y: 0, z: 2.5 }
+      up: { x: 0, y: 1, z: 0 }
+    side_profile:
+      eye: { x: 0, y: -2, z: 0.5 }
+      up: { x: 0, y: 0, z: 1 }
+    isometric:
+      eye: { x: 1.5, y: 1.5, z: 1.0 }
+      up: { x: 0, y: 0, z: 1 }
+    detail_closeup:
+      eye: { x: 0, y: -0.8, z: 0.3 }
+      up: { x: 0, y: 0, z: 1 }
+
+  export:
+    png_width: 1920
+    png_height: 1080
+    png_scale: 2
+    html_include_plotlyjs: cdn
+
+  performance:
+    max_points_client_render: 50000
+    max_traces_per_figure: 50

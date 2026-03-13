@@ -1,6 +1,6 @@
 {
   "overall_disposition": "REPLACE",
-  "timestamp": "20260306_114915",
+  "timestamp": "20260313_144230",
   "part_number": "4134613",
   "scan_file": "data\\sample_scan.ply",
   "cad_file": "data\\cad_reference.ply",
@@ -4537,7 +4537,7 @@
     "edge_extraction": {
       "le_points": 20,
       "te_points": 20,
-      "extraction_time_s": 0.151
+      "extraction_time_s": 0.091
     },
     "foil_tuning": {
       "best_params": {
@@ -4546,7 +4546,7 @@
       },
       "best_score": 0.0,
       "n_trials": 100,
-      "calibration_time_s": 44.631
+      "calibration_time_s": 26.791
     },
     "ml_metrics": {
       "random_forest": {
@@ -4651,7 +4651,7 @@
           "importance": 0.03197939660608036
         }
       ],
-      "training_time_s": 6.41
+      "training_time_s": 4.36
     },
     "feature_extraction": {
       "n_features": 58,

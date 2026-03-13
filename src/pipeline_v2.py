@@ -126,6 +126,7 @@ def run_pipeline_v2(
     all_defects = []
     all_scan_pts_mm = []
     all_deviations = []
+    all_foil_labels = []
 
     for foil_number, foil_pcd in foils:
         print(f"\n--- Processing Foil {foil_number} ---")
@@ -146,6 +147,7 @@ def run_pipeline_v2(
 
         all_scan_pts_mm.append(foil_pts_mm)
         all_deviations.append(signed_devs)
+        all_foil_labels.append(np.full(len(foil_pts_mm), foil_number))
 
         # Phase 5: Cluster defects
         foil_defects = phase5.execute(foil_defect_pts, foil_defect_devs, foil_number)
@@ -161,6 +163,28 @@ def run_pipeline_v2(
 
     combined_pts = np.vstack(all_scan_pts_mm) if all_scan_pts_mm else np.zeros((0, 3))
     combined_devs = np.concatenate(all_deviations) if all_deviations else np.zeros(0)
+
+    combined_foil_labels = np.concatenate(all_foil_labels) if all_foil_labels else None
+
+    viz_result = {}
+    try:
+        _src_dir = os.path.dirname(os.path.abspath(__file__))
+        if sys.path[0] != _src_dir:
+            sys.path.insert(0, _src_dir)
+        from visualization.python.generate_phase_figures import generate_and_export_all
+        viz_result = generate_and_export_all(
+            scan_points_mm=combined_pts,
+            deviations_mm=combined_devs,
+            foil_labels=combined_foil_labels,
+            all_defects=all_defects,
+            output_dir=os.path.join("output", "visualizations"),
+            part_number=part_number,
+            threshold_mm=-0.01,
+            expected_blades=len(foils),
+        )
+        print("  [Viz] Plotly phase figures exported to output/visualizations/")
+    except Exception as e:
+        print(f"  [Viz] Skip phase figures: {e}")
 
     # ── Phase 9: Feature Extraction (Sprint 4 — TLL-11) ──
     feature_matrix = None

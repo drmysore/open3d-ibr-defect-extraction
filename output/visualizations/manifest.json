@@ -1,0 +1,17 @@
+{
+  "part_number": "4134613",
+  "phases": [
+    "phase1",
+    "phase3",
+    "phase4",
+    "phase5",
+    "phase7"
+  ],
+  "paths": {
+    "phase1": "output\\visualizations\\phase1_raw_scan.json",
+    "phase3": "output\\visualizations\\phase3_deviation.json",
+    "phase4": "output\\visualizations\\phase4_segmentation.json",
+    "phase5": "output\\visualizations\\phase5_clustering.json",
+    "phase7": "output\\visualizations\\phase7_zone_map.json"
+  }
+}
