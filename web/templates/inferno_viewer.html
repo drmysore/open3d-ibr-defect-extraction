@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inferno 3D Viewer — IBR Defect Extraction</title>
+<script src="https://cdn.jsdelivr.net/npm/inferno@8.2.3/dist/inferno.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/inferno-create-element@8.2.3/dist/inferno-create-element.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/inferno-hyperscript@8.2.3/dist/inferno-hyperscript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<style>
+  :root {
+    --bg:#0a0e17;--surface:#131a2b;--surface2:#1a2338;--border:#2a3654;
+    --text:#e2e8f0;--text-muted:#8892a4;--accent:#3b82f6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:24px;flex-shrink:0}
+  .topbar h1{font-size:18px;font-weight:700}.topbar h1 span{color:var(--accent)}
+  .topbar nav{display:flex;gap:16px;margin-left:auto}
+  .topbar nav a{color:var(--text-muted);font-size:13px;font-weight:500;padding:6px 14px;border-radius:6px;transition:all .15s}
+  .topbar nav a:hover,.topbar nav a.active{color:var(--text);background:var(--surface2);text-decoration:none}
+
+  .toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0}
+  .toolbar label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .toolbar select,.toolbar input[type=range]{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:13px}
+  .toolbar select{cursor:pointer}
+  .toolbar input[type=range]{width:100px;padding:4px 2px;cursor:pointer}
+
+  .btn{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s}
+  .btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  .btn-outline:hover{background:rgba(59,130,246,.12)}
+
+  #canvas-wrap{flex:1;position:relative;min-height:0;background:var(--bg)}
+  #canvas-wrap canvas{display:block;width:100%;height:100%}
+
+  #loading-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(10,14,23,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:10}
+  #loading-overlay.show{display:flex}
+  .spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .load-text{color:var(--text);font-size:13px}
+
+  #status-bar{background:var(--surface);border-top:1px solid var(--border);padding:8px 32px;font-size:12px;color:var(--text-muted);display:flex;gap:24px;flex-shrink:0}
+  .status-item span{color:var(--text);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span>IBR</span> Defect Extraction System</h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/viewer3d">3D Viewer</a>
+    <a href="/reports">Reports</a>
+    <a href="/phase-viewer">Phase Viewer</a>
+    <a href="/inferno-viewer" class="active">Inferno 3D</a>
+    <a href="/comparison">Compare</a>
+  </nav>
+</div>
+
+<div id="toolbar-mount"></div>
+
+<div id="canvas-wrap">
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="load-text" id="load-msg">Loading point cloud...</div>
+  </div>
+</div>
+
+<div id="status-mount"></div>
+
+<script>
+(function () {
+  var ce = Inferno.createElement;
+
+  /* ── State ─────────────────────────────────────────── */
+  var state = {
+    viewMode: 'deviations',
+    pointSize: 2,
+    maxPoints: 30000,
+    colormap: 'Viridis',
+    pointCount: 0,
+    devMin: null,
+    devMax: null,
+    loading: false
+  };
+
+  /* ── Colormap functions  [0,1] → [r,g,b] in [0,1] ── */
+  function lerp3(a, b, t) { return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; }
+
+  function mapStops(stops, t) {
+    t = Math.max(0, Math.min(1, t));
+    for (var i = 0; i < stops.length - 1; i++) {
+      if (t <= stops[i+1][0]) {
+        var f = (t - stops[i][0]) / (stops[i+1][0] - stops[i][0]);
+        return lerp3(stops[i][1], stops[i+1][1], f);
+      }
+    }
+    return stops[stops.length-1][1];
+  }
+
+  var COLORMAPS = {
+    Viridis: function(t) {
+      return mapStops([
+        [0.00, [0.267,0.004,0.329]], [0.25, [0.231,0.322,0.545]],
+        [0.50, [0.129,0.569,0.549]], [0.75, [0.369,0.788,0.384]],
+        [1.00, [0.992,0.906,0.145]]
+      ], t);
+    },
+    RdYlGn: function(t) {
+      return mapStops([
+        [0.00, [0.843,0.188,0.153]], [0.25, [0.992,0.682,0.380]],
+        [0.50, [0.996,0.878,0.545]], [0.75, [0.651,0.851,0.416]],
+        [1.00, [0.102,0.596,0.314]]
+      ], t);
+    },
+    Jet: function(t) {
+      return mapStops([
+        [0.00, [0.000,0.000,1.000]], [0.25, [0.000,1.000,1.000]],
+        [0.50, [0.000,1.000,0.000]], [0.75, [1.000,1.000,0.000]],
+        [1.00, [1.000,0.000,0.000]]
+      ], t);
+    },
+    Inferno: function(t) {
+      return mapStops([
+        [0.00, [0.002,0.000,0.014]], [0.20, [0.259,0.039,0.408]],
+        [0.40, [0.576,0.149,0.404]], [0.60, [0.867,0.318,0.227]],
+        [0.80, [0.988,0.647,0.039]], [1.00, [0.988,1.000,0.643]]
+      ], t);
+    }
+  };
+
+  /* ── Three.js setup ──────────────────────────────── */
+  var canvasWrap = document.getElementById('canvas-wrap');
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(50, canvasWrap.clientWidth / canvasWrap.clientHeight, 0.1, 5000);
+  var renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setClearColor(0x0a0e17);
+  renderer.setSize(canvasWrap.clientWidth, canvasWrap.clientHeight);
+  canvasWrap.insertBefore(renderer.domElement, canvasWrap.firstChild);
+
+  var pointsMesh = null;
+
+  /* ── Orbit controller (manual) ───────────────────── */
+  var orbit = {
+    theta: Math.PI / 4,
+    phi: Math.PI / 3,
+    radius: 200,
+    target: new THREE.Vector3(0, 0, 0),
+    dragging: false,
+    panning: false,
+    lastX: 0, lastY: 0
+  };
+
+  function orbitUpdate() {
+    var sp = Math.sin(orbit.phi), cp = Math.cos(orbit.phi);
+    var st = Math.sin(orbit.theta), ct = Math.cos(orbit.theta);
+    camera.position.set(
+      orbit.target.x + orbit.radius * sp * ct,
+      orbit.target.y + orbit.radius * cp,
+      orbit.target.z + orbit.radius * sp * st
+    );
+    camera.lookAt(orbit.target);
+  }
+  orbitUpdate();
+
+  var cvs = renderer.domElement;
+  cvs.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+  cvs.addEventListener('mousedown', function(e) {
+    if (e.button === 2 || e.shiftKey) { orbit.panning = true; }
+    else if (e.button === 0) { orbit.dragging = true; }
+    orbit.lastX = e.clientX; orbit.lastY = e.clientY;
+  });
+
+  cvs.addEventListener('mousemove', function(e) {
+    var dx = e.clientX - orbit.lastX, dy = e.clientY - orbit.lastY;
+    orbit.lastX = e.clientX; orbit.lastY = e.clientY;
+    if (orbit.dragging) {
+      orbit.theta -= dx * 0.005;
+      orbit.phi = Math.max(0.05, Math.min(Math.PI - 0.05, orbit.phi - dy * 0.005));
+      orbitUpdate();
+    } else if (orbit.panning) {
+      var speed = orbit.radius * 0.001;
+      var right = new THREE.Vector3(); var up = new THREE.Vector3();
+      right.setFromMatrixColumn(camera.matrix, 0);
+      up.setFromMatrixColumn(camera.matrix, 1);
+      orbit.target.addScaledVector(right, -dx * speed);
+      orbit.target.addScaledVector(up, dy * speed);
+      orbitUpdate();
+    }
+  });
+
+  window.addEventListener('mouseup', function() { orbit.dragging = false; orbit.panning = false; });
+
+  cvs.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    orbit.radius *= e.deltaY > 0 ? 1.1 : 0.9;
+    orbit.radius = Math.max(1, Math.min(5000, orbit.radius));
+    orbitUpdate();
+  }, { passive: false });
+
+  function resetCamera() {
+    orbit.theta = Math.PI / 4; orbit.phi = Math.PI / 3; orbit.radius = 200;
+    orbit.target.set(0, 0, 0);
+    if (pointsMesh) {
+      var geom = pointsMesh.geometry;
+      geom.computeBoundingBox();
+      var c = new THREE.Vector3(), s = new THREE.Vector3();
+      geom.boundingBox.getCenter(c);
+      geom.boundingBox.getSize(s);
+      orbit.target.copy(c);
+      orbit.radius = Math.max(s.x, s.y, s.z) * 1.5 || 200;
+    }
+    orbitUpdate();
+  }
+
+  /* ── Render loop ─────────────────────────────────── */
+  (function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  })();
+
+  window.addEventListener('resize', function() {
+    var w = canvasWrap.clientWidth, h = canvasWrap.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+
+  /* ── Loading overlay ─────────────────────────────── */
+  var loadEl = document.getElementById('loading-overlay');
+  var loadMsg = document.getElementById('load-msg');
+
+  function showLoading(msg) { loadMsg.textContent = msg || 'Loading...'; loadEl.classList.add('show'); }
+  function hideLoading() { loadEl.classList.remove('show'); }
+
+  /* ── Build point cloud ───────────────────────────── */
+  function buildPoints(pointsArr, colorsFlat, size) {
+    if (pointsMesh) { scene.remove(pointsMesh); pointsMesh.geometry.dispose(); pointsMesh.material.dispose(); }
+    var n = pointsArr.length;
+    var pos = new Float32Array(n * 3);
+    for (var i = 0; i < n; i++) { pos[i*3]=pointsArr[i][0]; pos[i*3+1]=pointsArr[i][1]; pos[i*3+2]=pointsArr[i][2]; }
+    var geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colorsFlat, 3));
+    var mat = new THREE.PointsMaterial({ size: size, vertexColors: true, sizeAttenuation: false });
+    pointsMesh = new THREE.Points(geom, mat);
+    scene.add(pointsMesh);
+
+    geom.computeBoundingBox();
+    var c = new THREE.Vector3(), s = new THREE.Vector3();
+    geom.boundingBox.getCenter(c);
+    geom.boundingBox.getSize(s);
+    orbit.target.copy(c);
+    orbit.radius = Math.max(s.x, s.y, s.z) * 1.5 || 200;
+    orbitUpdate();
+  }
+
+  function recolorPoints(deviations) {
+    if (!pointsMesh || !deviations) return;
+    var cmFn = COLORMAPS[state.colormap];
+    var n = deviations.length;
+    var minD = Infinity, maxD = -Infinity;
+    for (var i = 0; i < n; i++) { if (deviations[i]<minD) minD=deviations[i]; if (deviations[i]>maxD) maxD=deviations[i]; }
+    var range = maxD - minD || 1;
+    var colors = new Float32Array(n * 3);
+    for (var i = 0; i < n; i++) {
+      var t = (deviations[i] - minD) / range;
+      var c = cmFn(t);
+      colors[i*3]=c[0]; colors[i*3+1]=c[1]; colors[i*3+2]=c[2];
+    }
+    pointsMesh.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    pointsMesh.geometry.attributes.color.needsUpdate = true;
+    state.devMin = minD; state.devMax = maxD;
+  }
+
+  /* ── Data loading ────────────────────────────────── */
+  var cachedDeviations = null;
+
+  function loadData() {
+    var mode = state.viewMode;
+    showLoading('Loading ' + mode + ' data...');
+
+    var url;
+    if (mode === 'deviations') url = '/api/pointcloud/deviations';
+    else if (mode === 'scan') url = '/api/pointcloud/scan';
+    else url = '/api/pointcloud/cad';
+
+    fetch(url).then(function(r){ return r.json(); }).then(function(data) {
+      var pts = data.points;
+      var max = state.maxPoints;
+      if (pts.length > max) pts = pts.slice(0, max);
+
+      var n = pts.length;
+      state.pointCount = n;
+      state.devMin = null; state.devMax = null;
+      cachedDeviations = null;
+
+      if (mode === 'deviations' && data.deviations) {
+        var devs = data.deviations;
+        if (devs.length > max) devs = devs.slice(0, max);
+        cachedDeviations = devs;
+        var cmFn = COLORMAPS[state.colormap];
+        var minD = Infinity, maxD = -Infinity;
+        for (var i = 0; i < n; i++) { if(devs[i]<minD)minD=devs[i]; if(devs[i]>maxD)maxD=devs[i]; }
+        var range = maxD - minD || 1;
+        var colors = new Float32Array(n * 3);
+        for (var i = 0; i < n; i++) {
+          var t = (devs[i] - minD) / range;
+          var c = cmFn(t);
+          colors[i*3]=c[0]; colors[i*3+1]=c[1]; colors[i*3+2]=c[2];
+        }
+        state.devMin = minD; state.devMax = maxD;
+        buildPoints(pts, colors, state.pointSize);
+      } else {
+        var uniformColor = (mode === 'scan') ? [0.133,0.773,0.369] : [0.231,0.510,0.965];
+        var colors = new Float32Array(n * 3);
+        for (var i = 0; i < n; i++) { colors[i*3]=uniformColor[0]; colors[i*3+1]=uniformColor[1]; colors[i*3+2]=uniformColor[2]; }
+        buildPoints(pts, colors, state.pointSize);
+      }
+      hideLoading();
+      renderUI();
+    }).catch(function(err) {
+      hideLoading();
+      alert('Error loading data: ' + err);
+    });
+  }
+
+  /* ── Inferno UI: Toolbar ─────────────────────────── */
+  function Toolbar() {
+    return ce('div', { className: 'toolbar' },
+      ce('label', null, 'View:'),
+      ce('select', {
+        value: state.viewMode,
+        onChange: function(e) { state.viewMode = e.target.value; loadData(); }
+      },
+        ce('option', { value: 'scan' }, 'Scan'),
+        ce('option', { value: 'cad' }, 'CAD'),
+        ce('option', { value: 'deviations' }, 'Deviation')
+      ),
+
+      ce('label', { style: { marginLeft: '16px' } }, 'Point Size:'),
+      ce('input', {
+        type: 'range', min: '1', max: '5', value: String(state.pointSize),
+        onInput: function(e) {
+          state.pointSize = +e.target.value;
+          if (pointsMesh) pointsMesh.material.size = state.pointSize;
+        }
+      }),
+
+      ce('label', { style: { marginLeft: '16px' } }, 'Max Points:'),
+      ce('select', {
+        value: String(state.maxPoints),
+        onChange: function(e) { state.maxPoints = +e.target.value; loadData(); }
+      },
+        ce('option', { value: '10000' }, '10K'),
+        ce('option', { value: '30000' }, '30K'),
+        ce('option', { value: '50000' }, '50K')
+      ),
+
+      ce('label', { style: { marginLeft: '16px' } }, 'Colormap:'),
+      ce('select', {
+        value: state.colormap,
+        onChange: function(e) {
+          state.colormap = e.target.value;
+          if (cachedDeviations) { recolorPoints(cachedDeviations); }
+          renderUI();
+        }
+      },
+        ce('option', { value: 'Viridis' }, 'Viridis'),
+        ce('option', { value: 'RdYlGn' }, 'RdYlGn'),
+        ce('option', { value: 'Jet' }, 'Jet'),
+        ce('option', { value: 'Inferno' }, 'Inferno')
+      ),
+
+      ce('button', {
+        className: 'btn btn-outline', style: { marginLeft: 'auto' },
+        onClick: resetCamera
+      }, 'Reset Camera')
+    );
+  }
+
+  /* ── Inferno UI: Status Bar ──────────────────────── */
+  function StatusBar() {
+    var items = [
+      'Points: ' + (state.pointCount ? state.pointCount.toLocaleString() : '—')
+    ];
+    if (state.devMin !== null && state.devMax !== null) {
+      items.push('Deviation: [' + state.devMin.toFixed(4) + ', ' + state.devMax.toFixed(4) + '] mm');
+    }
+    items.push('Colormap: ' + state.colormap);
+    items.push('Mode: ' + state.viewMode.charAt(0).toUpperCase() + state.viewMode.slice(1));
+
+    return ce('div', { id: 'status-bar' },
+      items.map(function(text, i) {
+        return ce('span', { key: i, className: 'status-item' }, text);
+      })
+    );
+  }
+
+  /* ── Render Inferno UI ───────────────────────────── */
+  function renderUI() {
+    Inferno.render(ce(Toolbar), document.getElementById('toolbar-mount'));
+    Inferno.render(ce(StatusBar), document.getElementById('status-mount'));
+  }
+
+  /* ── Init ────────────────────────────────────────── */
+  renderUI();
+  loadData();
+})();
+</script>
+</body>
+</html>
