@@ -143,6 +143,16 @@ async def reports_page(request: Request):
     })
 
 
+@app.get("/inferno-viewer", response_class=HTMLResponse)
+async def inferno_viewer(request: Request):
+    return templates.TemplateResponse("inferno_viewer.html", {"request": request})
+
+
+@app.get("/comparison", response_class=HTMLResponse)
+async def comparison_page(request: Request):
+    return templates.TemplateResponse("comparison.html", {"request": request})
+
+
 # ----- API Endpoints -----
 
 @app.get("/api/report/latest")

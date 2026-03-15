@@ -25,10 +25,10 @@ def main():
     scan_path = os.path.join("data", "sample_scan.ply")
     cad_path = os.path.join("data", "cad_reference.ply")
 
-    if not os.path.exists(scan_path) or not os.path.exists(cad_path):
-        print("\nGenerating synthetic test data...")
-        generate_synthetic_data(output_dir="data", n_blades=5, points_per_blade=10000)
-        print("Synthetic data generated.\n")
+    # Always regenerate to pick up latest geometry improvements
+    print("\nGenerating synthetic test data (37-blade IBR)...")
+    generate_synthetic_data(output_dir="data", n_blades=37, points_per_blade=5000)
+    print("Synthetic data generated.\n")
 
     results = run_pipeline_v2(
         ply_path=scan_path,

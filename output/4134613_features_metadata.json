@@ -59,11 +59,9 @@
     "type_unknown",
     "label_serviceable"
   ],
-  "n_defects": 4,
+  "n_defects": 2,
   "n_features": 58,
   "feature_status": [
-    "OK",
-    "OK",
     "OK",
     "OK"
   ]
