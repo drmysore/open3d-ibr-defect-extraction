@@ -1,0 +1,12 @@
+{
+  "timestamp": "20260316_141154",
+  "part_number": "4119905",
+  "scan_file": "C:\\Users\\mssup\\OneDrive\\Desktop\\Testing\\open3d_v1\\src\\..\\data\\real_scan_4119905.ply",
+  "cad_file": "C:\\Users\\mssup\\OneDrive\\Desktop\\Testing\\open3d_v1\\src\\..\\data\\real_cad_4119905.ply",
+  "alignment_rmse_mm": 3.0327070133352527e-12,
+  "foil_count": 1,
+  "total_defects": 0,
+  "overall_disposition": "SERVICEABLE",
+  "disposition_breakdown": {},
+  "defects": []
+}
