@@ -153,6 +153,12 @@ async def comparison_page(request: Request):
     return templates.TemplateResponse("comparison.html", {"request": request})
 
 
+@app.get("/gallery", response_class=HTMLResponse)
+async def gallery_page(request: Request):
+    """Visual gallery for generated 2D PNG views."""
+    return templates.TemplateResponse("image_gallery.html", {"request": request})
+
+
 # ----- API Endpoints -----
 
 @app.get("/api/report/latest")
