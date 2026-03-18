@@ -4,12 +4,13 @@ Reads only the 84-byte header to get triangle count, then samples every
 Nth triangle to estimate bounding box, centroid, and dimensions.
 """
 
+import argparse
 import struct
 import os
 import sys
 import numpy as np
 
-STL_PATH = r"C:\Users\mssup\3dpoint\extracted\3DPC Data\models\20230626_77445-4119905_5th_Stage_IBR_Sprayed.stl"
+DEFAULT_STL_PATH = r"C:\Users\mssup\3dpoint\extracted\3DPC Data\models\20230626_77445-4119905_5th_Stage_IBR_Sprayed.stl"
 
 HEADER_SIZE = 80
 TRI_COUNT_SIZE = 4
@@ -68,12 +69,23 @@ def sample_triangles(path, tri_count, sample_every=1000):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Analyze large binary STL without full load")
+    parser.add_argument("--stl-path", default=None, help="Absolute path to STL file")
+    args = parser.parse_args()
+    stl_path = args.stl_path or os.environ.get("REAL_STL_PATH") or DEFAULT_STL_PATH
+
+    if not os.path.isfile(stl_path):
+        print("ERROR: STL file not found.")
+        print(f"  Resolved path: {stl_path}")
+        print("  Provide --stl-path or set REAL_STL_PATH environment variable.")
+        sys.exit(1)
+
     print("=" * 60)
     print("  STL HEADER ANALYSIS")
-    print(f"  File: {STL_PATH}")
+    print(f"  File: {stl_path}")
     print("=" * 60)
 
-    info = read_stl_header(STL_PATH)
+    info = read_stl_header(stl_path)
 
     print(f"\n  Header text:       {info['header_text'][:60]}")
     print(f"  Triangle count:    {info['triangle_count']:,}")
@@ -86,7 +98,7 @@ def main():
     sample_every = 500
     print(f"\n  Sampling every {sample_every:,}th triangle...")
 
-    vertices, normals = sample_triangles(STL_PATH, tri_count, sample_every)
+    vertices, normals = sample_triangles(stl_path, tri_count, sample_every)
     n_sample_verts = len(vertices)
     n_sample_tris = len(normals)
 

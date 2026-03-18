@@ -42,12 +42,24 @@ python -m pip install --upgrade pip >/dev/null
 pip install -r requirements.txt >/dev/null
 
 echo "[4/6] Real data analysis (STL header + sampled stats)..."
-python src/analyze_real_stl.py || {
-  echo "[WARN] analyze_real_stl.py failed. Continuing with conversion."
-}
+if [ -n "${REAL_STL_PATH:-}" ] && [ -f "${REAL_STL_PATH}" ]; then
+  python src/analyze_real_stl.py --stl-path "${REAL_STL_PATH}" || {
+    echo "[WARN] analyze_real_stl.py failed. Continuing."
+  }
+else
+  python src/analyze_real_stl.py || {
+    echo "[WARN] STL not found at default path. Set REAL_STL_PATH to analyze/convert raw STL."
+  }
+fi
 
 echo "[5/6] STL -> PLY conversion + real pipeline run..."
-python src/stl_to_ply_sampled.py
+if [ -n "${REAL_STL_PATH:-}" ] && [ -f "${REAL_STL_PATH}" ]; then
+  python src/stl_to_ply_sampled.py --stl-path "${REAL_STL_PATH}"
+elif [ -f "data/real_scan_4119905.ply" ] && [ -f "data/real_cad_4119905.ply" ]; then
+  echo "[INFO] Reusing existing data/real_scan_4119905.ply and data/real_cad_4119905.ply"
+else
+  python src/stl_to_ply_sampled.py
+fi
 python src/run_real_data.py
 
 echo "[6/6] Starting API server..."
