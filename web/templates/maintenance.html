@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Maintenance — IBR Defect Extraction</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   :root {
     --bg: #0a0e17; --surface: #131a2b; --surface2: #1a2338;
@@ -11,174 +12,127 @@
     --accent: #3b82f6; --green: #22c55e; --amber: #f59e0b; --red: #ef4444;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
 
-  .topbar {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 14px 32px; display: flex; align-items: center; gap: 24px;
-  }
-  .topbar h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
-  .topbar h1 span { color: var(--accent); }
-  .topbar nav { display: flex; gap: 16px; margin-left: auto; }
-  .topbar nav a {
-    color: var(--text-muted); font-size: 13px; font-weight: 500;
-    padding: 6px 14px; border-radius: 6px; transition: all .15s;
-  }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 32px; display: flex; align-items: center; gap: 24px; }
+  .topbar h1 { font-size: 18px; font-weight: 700; } .topbar h1 span { color: var(--accent); }
+  .topbar nav { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+  .topbar nav a { color: var(--text-muted); font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 6px; transition: all .15s; }
   .topbar nav a:hover, .topbar nav a.active { color: var(--text); background: var(--surface2); text-decoration: none; }
 
-  .container { max-width: 1440px; margin: 0 auto; padding: 24px 32px; }
+  .container { max-width: 1500px; margin: 0 auto; padding: 24px 32px; }
+  .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 12px; font-weight: 700; }
 
-  .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    padding: 20px; display: flex; flex-direction: column;
-  }
-  .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
-  .stat-card .value { font-size: 28px; font-weight: 700; }
-  .stat-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  /* Stats row */
+  .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .stat-card.blue::before { background: var(--accent); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.amber::before { background: var(--amber); }
+  .stat-card.red::before { background: var(--red); }
+  .stat-card .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+  .stat-card .value { font-size: 26px; font-weight: 700; line-height: 1.1; }
+  .stat-card .sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-  .badge {
-    display: inline-block; padding: 3px 10px; border-radius: 20px;
-    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-  }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
   .badge-green { background: rgba(34,197,94,.15); color: var(--green); }
   .badge-amber { background: rgba(245,158,11,.15); color: var(--amber); }
   .badge-red { background: rgba(239,68,68,.15); color: var(--red); }
 
-  .card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    overflow: hidden; margin-bottom: 24px;
-  }
-  .card-header {
-    padding: 16px 20px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .card-header h2 { font-size: 14px; font-weight: 600; }
-  .card-body { padding: 20px; }
-
   /* Toggle panel */
-  .toggle-panel {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    padding: 16px 20px; margin-bottom: 24px;
-    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  .toggle-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .toggle-panel-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); white-space: nowrap; }
+  .toggle-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .toggle-pill {
+    padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted);
+    cursor: pointer; transition: all .15s; user-select: none;
   }
-  .toggle-panel-label {
-    font-size: 12px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.5px; color: var(--text-muted); margin-right: 4px; white-space: nowrap;
-  }
-  .toggle-group { display: flex; gap: 10px; flex-wrap: wrap; }
-  .toggle-item { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
-  .toggle-item .toggle-label { font-size: 13px; font-weight: 500; color: var(--text-muted); transition: color .15s; }
-  .toggle-item.active .toggle-label { color: var(--text); }
-
-  .toggle-switch {
-    position: relative; width: 40px; height: 22px;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 11px; transition: all .15s ease; flex-shrink: 0;
-  }
-  .toggle-switch::after {
-    content: ''; position: absolute; top: 2px; left: 2px;
-    width: 16px; height: 16px; border-radius: 50%;
-    background: var(--text-muted); transition: all .15s ease;
-  }
-  .toggle-item.active .toggle-switch {
-    background: var(--accent); border-color: var(--accent);
-  }
-  .toggle-item.active .toggle-switch::after {
-    left: 20px; background: #fff;
-  }
+  .toggle-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .toggle-pill:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .toggle-pill .count { margin-left: 4px; opacity: .7; font-size: 11px; }
 
   /* Foil grid */
-  .foil-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px; margin-bottom: 24px;
-  }
+  .foil-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 28px; }
   .foil-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    padding: 20px; cursor: pointer; transition: all .15s ease; position: relative;
+    padding: 18px; cursor: pointer; transition: all .2s ease; position: relative;
   }
-  .foil-card:hover { border-color: var(--accent); box-shadow: 0 0 16px rgba(59,130,246,.15); }
-  .foil-card.selected { border-color: var(--accent); box-shadow: 0 0 20px rgba(59,130,246,.2); }
-  .foil-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .foil-number { font-size: 22px; font-weight: 700; }
-  .foil-status-badge {
-    width: 40px; height: 40px; border-radius: 50%; display: flex;
-    align-items: center; justify-content: center; font-size: 20px; font-weight: 700;
-    flex-shrink: 0;
+  .foil-card:hover { border-color: rgba(59,130,246,.5); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+  .foil-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,.3); }
+  .foil-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .foil-number { font-size: 20px; font-weight: 700; }
+  .foil-status {
+    width: 36px; height: 36px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 18px; font-weight: 700;
   }
-  .foil-status-badge.green { background: rgba(34,197,94,.15); color: var(--green); }
-  .foil-status-badge.amber { background: rgba(245,158,11,.15); color: var(--amber); }
-  .foil-status-badge.red { background: rgba(239,68,68,.15); color: var(--red); }
+  .foil-status.s-green { background: rgba(34,197,94,.15); color: var(--green); }
+  .foil-status.s-amber { background: rgba(245,158,11,.15); color: var(--amber); }
+  .foil-status.s-red { background: rgba(239,68,68,.15); color: var(--red); }
+  .foil-count { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+  .foil-count strong { color: var(--text); font-size: 15px; }
+  .foil-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .foil-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: var(--surface2); color: var(--text-muted); font-weight: 600; }
+  .foil-disp { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .foil-disp.d-green { color: var(--green); } .foil-disp.d-amber { color: var(--amber); } .foil-disp.d-red { color: var(--red); }
 
-  .foil-defect-count { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
-  .foil-defect-count strong { color: var(--text); font-size: 16px; }
-  .foil-breakdown { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-  .foil-type-tag {
-    font-size: 11px; padding: 2px 8px; border-radius: 4px;
-    background: var(--surface2); color: var(--text-muted); font-weight: 500;
-  }
-  .foil-disposition { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-  .foil-disposition.green { color: var(--green); }
-  .foil-disposition.amber { color: var(--amber); }
-  .foil-disposition.red { color: var(--red); }
+  /* Detail drawer */
+  .detail-drawer { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 28px; display: none; overflow: hidden; animation: slideDown .25s ease; }
+  .detail-drawer.open { display: block; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .drawer-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .drawer-header h2 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .drawer-close { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 16px; transition: all .15s; display: flex; align-items: center; justify-content: center; }
+  .drawer-close:hover { color: var(--text); border-color: var(--accent); }
+  .drawer-body { padding: 24px; }
+  .drawer-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .drawer-stat { background: var(--surface2); border-radius: 8px; padding: 14px; }
+  .drawer-stat .ds-label { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin-bottom: 4px; }
+  .drawer-stat .ds-value { font-size: 20px; font-weight: 700; }
+  .drawer-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .chart-box { background: var(--surface2); border-radius: 8px; padding: 16px; min-height: 260px; }
+  .chart-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin-bottom: 10px; }
+
+  .drawer-table-wrap { max-height: 350px; overflow-y: auto; }
+  .drawer-table-wrap::-webkit-scrollbar { width: 6px; }
+  .drawer-table-wrap::-webkit-scrollbar-track { background: var(--surface2); border-radius: 3px; }
+  .drawer-table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
   /* Table */
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th {
-    text-align: left; padding: 10px 12px; color: var(--text-muted);
-    font-weight: 600; font-size: 11px; text-transform: uppercase;
-    letter-spacing: 0.5px; border-bottom: 1px solid var(--border);
-  }
-  tbody td { padding: 10px 12px; border-bottom: 1px solid rgba(42,54,84,.4); }
-  tbody tr:hover { background: rgba(59,130,246,.05); }
-  tbody tr.row-green { background: rgba(34,197,94,.04); }
-  tbody tr.row-green:hover { background: rgba(34,197,94,.08); }
-  tbody tr.row-amber { background: rgba(245,158,11,.04); }
-  tbody tr.row-amber:hover { background: rgba(245,158,11,.08); }
-  tbody tr.row-red { background: rgba(239,68,68,.04); }
-  tbody tr.row-red:hover { background: rgba(239,68,68,.08); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .card-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-header h2 { font-size: 14px; font-weight: 700; }
+  .card-body { padding: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th { text-align: left; padding: 10px 14px; color: var(--text-muted); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .6px; border-bottom: 1px solid var(--border); background: var(--surface2); position: sticky; top: 0; z-index: 2; }
+  tbody td { padding: 10px 14px; border-bottom: 1px solid rgba(42,54,84,.35); }
+  tbody tr { transition: background .1s; }
+  tbody tr:hover { background: rgba(59,130,246,.06); }
+  tbody tr.row-green { background: rgba(34,197,94,.04); } tbody tr.row-green:hover { background: rgba(34,197,94,.08); }
+  tbody tr.row-amber { background: rgba(245,158,11,.04); } tbody tr.row-amber:hover { background: rgba(245,158,11,.08); }
+  tbody tr.row-red { background: rgba(239,68,68,.04); } tbody tr.row-red:hover { background: rgba(239,68,68,.08); }
+  .status-pass { color: var(--green); font-weight: 700; } .status-fail { color: var(--red); font-weight: 700; }
 
-  .status-icon { font-weight: 700; font-size: 14px; }
-  .status-icon.pass { color: var(--green); }
-  .status-icon.fail { color: var(--red); }
+  .foil-filter-bar { display: flex; align-items: center; gap: 10px; }
+  .foil-filter-bar .tag { font-size: 12px; color: var(--accent); font-weight: 600; }
+  .clear-btn { padding: 3px 10px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 11px; cursor: pointer; transition: all .15s; }
+  .clear-btn:hover { color: var(--text); border-color: var(--accent); }
 
-  /* Loading */
-  #loading-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(10,14,23,.85); display: none; align-items: center;
-    justify-content: center; z-index: 1000; flex-direction: column; gap: 16px;
-  }
+  /* Loading / empty */
+  #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,14,23,.9); display: none; align-items: center; justify-content: center; z-index: 1000; flex-direction: column; gap: 16px; }
   #loading-overlay.show { display: flex; }
-  .spinner { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+  .spinner { width: 44px; height: 44px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  #loading-text { color: var(--text); font-size: 14px; }
+  #loading-text { color: var(--text-muted); font-size: 13px; }
+  .empty-state { text-align: center; padding: 80px 20px; }
+  .empty-state h3 { font-size: 20px; margin-bottom: 8px; }
+  .empty-state p { color: var(--text-muted); font-size: 14px; }
+  .error-banner { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); border-radius: 8px; padding: 14px 20px; color: var(--red); font-size: 13px; margin-bottom: 20px; display: none; }
 
-  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-  .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
-
-  .active-foil-label {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 12px; color: var(--accent); font-weight: 600; margin-left: auto;
-  }
-  .active-foil-label .clear-btn {
-    padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border);
-    background: transparent; color: var(--text-muted); font-size: 11px;
-    cursor: pointer; transition: all .15s;
-  }
-  .active-foil-label .clear-btn:hover { color: var(--text); border-color: var(--accent); }
-
-  @media (max-width: 1100px) {
-    .stats-row { grid-template-columns: repeat(3, 1fr); }
-  }
-  @media (max-width: 768px) {
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .foil-grid { grid-template-columns: 1fr; }
-    .topbar { padding: 12px 16px; flex-wrap: wrap; }
-    .topbar nav { gap: 8px; }
-    .container { padding: 16px; }
-  }
+  @media (max-width: 1100px) { .stats-row { grid-template-columns: repeat(3, 1fr); } .drawer-charts { grid-template-columns: 1fr; } .drawer-stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 768px) { .stats-row { grid-template-columns: 1fr 1fr; } .foil-grid { grid-template-columns: 1fr; } .container { padding: 16px; } .topbar { padding: 12px 16px; } }
 </style>
 </head>
 <body>
@@ -199,308 +153,282 @@
 
 <div id="loading-overlay" class="show">
   <div class="spinner"></div>
-  <div id="loading-text">Loading maintenance data...</div>
+  <div id="loading-text">Loading inspection data...</div>
 </div>
 
 <div class="container" id="main-content" style="display:none">
 
-  <!-- Part Summary Header -->
+  <div id="error-banner" class="error-banner"></div>
+
+  <!-- Part Summary -->
+  <div class="section-label">Part Summary</div>
   <div class="stats-row" id="stats-row"></div>
 
-  <!-- Defect Type Toggle Panel -->
+  <!-- Defect Type Filters -->
   <div class="toggle-panel">
-    <div class="toggle-panel-label">Filter by Defect Type</div>
+    <div class="toggle-panel-label">Defect Types</div>
     <div class="toggle-group" id="toggle-group"></div>
   </div>
 
   <!-- Foil Grid -->
+  <div class="section-label">Foil Health Overview <span id="foil-subtitle" style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text-muted)"></span></div>
   <div class="foil-grid" id="foil-grid"></div>
 
-  <!-- Defect Detail Table -->
-  <div class="card" id="table-card">
-    <div class="card-header">
-      <h2>Defect Details</h2>
-      <div class="active-foil-label" id="foil-filter-label" style="display:none">
-        Filtering: <strong id="foil-filter-name"></strong>
-        <button class="clear-btn" onclick="clearFoilFilter()">Clear</button>
-      </div>
+  <!-- Detail Drawer (shown on foil click) -->
+  <div class="detail-drawer" id="detail-drawer">
+    <div class="drawer-header">
+      <h2 id="drawer-title">Foil Details</h2>
+      <button class="drawer-close" onclick="closeDrawer()" title="Close">✕</button>
     </div>
-    <div class="card-body" style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th><th>Foil</th><th>Type</th><th>Zone</th>
-            <th>Depth (in)</th><th>Length (in)</th><th>Width (in)</th>
-            <th>Disposition</th><th>ML Confidence</th><th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="defect-tbody"></tbody>
-      </table>
-      <div id="table-empty" class="empty-state" style="display:none; padding:30px;">
-        <p>No defects match the current filters.</p>
+    <div class="drawer-body">
+      <div class="drawer-stats" id="drawer-stats"></div>
+      <div class="drawer-charts">
+        <div class="chart-box"><h3>Defect Depth &amp; Dimensions</h3><div id="chart-bar"></div></div>
+        <div class="chart-box"><h3>Defect Types</h3><div id="chart-pie"></div></div>
+      </div>
+      <div class="section-label" style="margin-top:4px">Defects on This Foil</div>
+      <div class="drawer-table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>ID</th><th>Type</th><th>Zone</th><th>Depth (in)</th><th>Length (in)</th><th>Width (in)</th><th>Disposition</th><th>ML Conf</th><th>Status</th></tr></thead>
+          <tbody id="drawer-tbody"></tbody>
+        </table>
       </div>
     </div>
   </div>
+
+  <!-- Full Defect Table -->
+  <div class="card">
+    <div class="card-header">
+      <h2>All Defect Details</h2>
+      <div class="foil-filter-bar" id="foil-filter-bar" style="display:none">
+        <span class="tag" id="filter-tag"></span>
+        <button class="clear-btn" onclick="clearFoilFilter()">Clear</button>
+      </div>
+    </div>
+    <div class="card-body" style="max-height:500px;overflow-y:auto">
+      <table>
+        <thead><tr><th>#</th><th>Foil</th><th>Type</th><th>Zone</th><th>Depth (in)</th><th>Length (in)</th><th>Width (in)</th><th>Nearest Edge</th><th>Disposition</th><th>ML Conf</th><th>Status</th></tr></thead>
+        <tbody id="defect-tbody"></tbody>
+      </table>
+      <div id="table-empty" class="empty-state" style="display:none;padding:30px;"><p>No defects match the current filters.</p></div>
+    </div>
+  </div>
+
 </div>
 
-<!-- Empty / error state -->
+<!-- Empty state -->
 <div class="container" id="empty-content" style="display:none">
   <div class="empty-state">
-    <h3>No Defects Found</h3>
-    <p>Run the pipeline from the Dashboard to generate inspection data.</p>
+    <h3>No Inspection Data Available</h3>
+    <p>Run the pipeline from the Dashboard to generate defect data, then return here.</p>
   </div>
 </div>
 
 <script>
-const DEFECT_TYPES = ['Dents', 'Scratches', 'Nicks', 'FOD', 'Erosion', 'Cracks', 'Gouges'];
-let allDefects = [];
-let reportData = null;
-let activeTypes = new Set(DEFECT_TYPES.map(t => t.toLowerCase()));
-let activeFoil = null;
+const KNOWN = ['Dents','Scratches','Nicks','FOD','Erosion','Cracks','Gouges','Surface','Edge'];
+let TYPES = [], allDefects = [], report = null, activeTypes = new Set(), activeFoil = null;
 
-function dispositionColor(d) {
-  if (d === 'SERVICEABLE') return 'green';
-  if (d === 'BLEND') return 'amber';
-  return 'red';
+const plotColors = { bg: '#1a2338', paper: '#1a2338', grid: '#2a3654', font: '#8892a4', accent: '#3b82f6' };
+const typeColors = { nick: '#8b5cf6', nicks: '#8b5cf6', dent: '#f59e0b', dents: '#f59e0b', scratch: '#3b82f6', scratches: '#3b82f6', fod: '#ef4444', erosion: '#22c55e', crack: '#ec4899', cracks: '#ec4899', gouge: '#f97316', gouges: '#f97316', surface: '#64748b', edge: '#06b6d4', unknown: '#475569' };
+function tColor(t) { return typeColors[t.toLowerCase()] || '#64748b'; }
+
+function norm(t) { return (t || 'unknown').toLowerCase(); }
+function title(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function dispCls(d) { return d === 'SERVICEABLE' ? 'green' : d === 'BLEND' ? 'amber' : 'red'; }
+function dispBadge(d) { return '<span class="badge badge-' + dispCls(d) + '">' + (d || 'N/A') + '</span>'; }
+function foilDisp(defs) { if (defs.some(d => d.disposition === 'REPLACE')) return 'REPLACE'; if (defs.some(d => d.disposition === 'BLEND')) return 'BLEND'; return 'SERVICEABLE'; }
+function statusIcon(disp) { return disp === 'SERVICEABLE' ? { c: 's-green', i: '✓' } : disp === 'BLEND' ? { c: 's-amber', i: '⚠' } : { c: 's-red', i: '✗' }; }
+function fmt(v, d) { return v != null ? parseFloat(v).toFixed(d) : '—'; }
+
+function typeCounts() {
+  const m = {};
+  allDefects.forEach(d => { const t = norm(d.classified_type); m[t] = (m[t] || 0) + 1; });
+  return m;
 }
 
-function dispositionBadge(d) {
-  return `<span class="badge badge-${dispositionColor(d)}">${d}</span>`;
-}
-
-function foilDisposition(defects) {
-  if (defects.some(d => d.disposition === 'REPLACE')) return 'REPLACE';
-  if (defects.some(d => d.disposition === 'BLEND')) return 'BLEND';
-  return 'SERVICEABLE';
-}
-
-function foilStatusIcon(disp) {
-  if (disp === 'SERVICEABLE') return { cls: 'green', icon: '✓' };
-  if (disp === 'BLEND') return { cls: 'amber', icon: '⚠' };
-  return { cls: 'red', icon: '✗' };
-}
-
-function normalizeType(t) {
-  return (t || 'unknown').toLowerCase();
-}
-
-function titleCase(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-function filteredDefects() {
+function filtered() {
   return allDefects.filter(d => {
-    if (!activeTypes.has(normalizeType(d.classified_type))) return false;
-    if (activeFoil !== null && d.foil_number !== activeFoil) return false;
+    if (!activeTypes.has(norm(d.classified_type))) return false;
+    if (activeFoil !== null && String(d.foil_number) !== String(activeFoil)) return false;
     return true;
   });
 }
 
 function buildStats() {
-  const r = reportData;
-  const statsRow = document.getElementById('stats-row');
-  const dispCls = dispositionColor(r.overall_disposition);
-  statsRow.innerHTML = `
-    <div class="stat-card">
-      <div class="label">Part Number</div>
-      <div class="value" style="font-size:20px">${r.part_number || '—'}</div>
-      <div class="sub">Inspection Part</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">Total Defects</div>
-      <div class="value">${r.total_defects}</div>
-      <div class="sub">Across ${r.foil_count} foil(s)</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">Foil Count</div>
-      <div class="value">${r.foil_count}</div>
-      <div class="sub">Inspected foils</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">Overall Disposition</div>
-      <div class="value" style="font-size:18px">${dispositionBadge(r.overall_disposition)}</div>
-      <div class="sub">Part-level assessment</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">Scan Timestamp</div>
-      <div class="value" style="font-size:16px">${r.timestamp || '—'}</div>
-      <div class="sub">${r.scan_file || ''}</div>
-    </div>
-  `;
+  const r = report;
+  const dc = dispCls(r.overall_disposition);
+  const bdown = r.disposition_breakdown || {};
+  document.getElementById('stats-row').innerHTML = [
+    { label: 'Part Number', val: r.part_number || '—', sub: 'Inspection target', cls: 'blue', style: 'font-size:18px' },
+    { label: 'Total Defects', val: r.total_defects, sub: 'Across ' + r.foil_count + ' foil(s)', cls: dc },
+    { label: 'Serviceable', val: bdown.SERVICEABLE || 0, sub: 'Within limits', cls: 'green' },
+    { label: 'Blend Required', val: bdown.BLEND || 0, sub: 'Repairable', cls: 'amber' },
+    { label: 'Replace', val: bdown.REPLACE || 0, sub: 'Exceeds limits', cls: 'red' },
+  ].map(s => '<div class="stat-card ' + s.cls + '"><div class="label">' + s.label + '</div><div class="value"' + (s.style ? ' style="' + s.style + '"' : '') + '>' + s.val + '</div><div class="sub">' + s.sub + '</div></div>').join('');
 }
 
 function buildToggles() {
+  const counts = typeCounts();
   const group = document.getElementById('toggle-group');
-  const allTypes = [...DEFECT_TYPES, 'All'];
-  group.innerHTML = allTypes.map(t => {
-    const key = t.toLowerCase();
-    const isAll = t === 'All';
-    const active = isAll
-      ? activeTypes.size === DEFECT_TYPES.length
-      : activeTypes.has(key);
-    return `
-      <div class="toggle-item${active ? ' active' : ''}" data-type="${key}" onclick="toggleType('${key}')">
-        <div class="toggle-switch"></div>
-        <span class="toggle-label">${t}</span>
-      </div>
-    `;
-  }).join('');
+  const allOn = activeTypes.size === TYPES.length;
+  let html = '<div class="toggle-pill' + (allOn ? ' active' : '') + '" onclick="toggleType(\'all\')">All<span class="count">' + allDefects.length + '</span></div>';
+  TYPES.forEach(t => {
+    const k = t.toLowerCase(), on = activeTypes.has(k), c = counts[k] || 0;
+    html += '<div class="toggle-pill' + (on ? ' active' : '') + '" style="' + (on ? 'background:' + tColor(k) + ';border-color:' + tColor(k) : '') + '" onclick="toggleType(\'' + k + '\')">' + t + '<span class="count">' + c + '</span></div>';
+  });
+  group.innerHTML = html;
 }
 
-function toggleType(type) {
-  if (type === 'all') {
-    const allActive = activeTypes.size === DEFECT_TYPES.length;
-    if (allActive) {
-      activeTypes.clear();
-    } else {
-      activeTypes = new Set(DEFECT_TYPES.map(t => t.toLowerCase()));
-    }
+function toggleType(t) {
+  if (t === 'all') {
+    activeTypes = activeTypes.size === TYPES.length ? new Set() : new Set(TYPES.map(x => x.toLowerCase()));
   } else {
-    if (activeTypes.has(type)) {
-      activeTypes.delete(type);
-    } else {
-      activeTypes.add(type);
-    }
+    activeTypes.has(t) ? activeTypes.delete(t) : activeTypes.add(t);
   }
-  buildToggles();
-  renderFoilGrid();
-  renderTable();
+  buildToggles(); renderFoilGrid(); renderTable();
+}
+
+function foilMap() {
+  const m = {};
+  allDefects.filter(d => activeTypes.has(norm(d.classified_type))).forEach(d => {
+    const f = d.foil_number; if (!m[f]) m[f] = []; m[f].push(d);
+  });
+  return m;
 }
 
 function renderFoilGrid() {
   const grid = document.getElementById('foil-grid');
-  const foilMap = {};
-  const filtered = allDefects.filter(d => activeTypes.has(normalizeType(d.classified_type)));
-
-  filtered.forEach(d => {
-    const fn = d.foil_number;
-    if (!foilMap[fn]) foilMap[fn] = [];
-    foilMap[fn].push(d);
-  });
-
-  const foils = Object.keys(foilMap).sort((a, b) => {
-    const na = parseInt(a, 10), nb = parseInt(b, 10);
-    return (isNaN(na) || isNaN(nb)) ? a.localeCompare(b) : na - nb;
-  });
-
-  if (foils.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:40px"><p>No foils match the selected defect types.</p></div>';
-    return;
-  }
-
+  const fm = foilMap();
+  const foils = Object.keys(fm).sort((a, b) => +a - +b);
+  document.getElementById('foil-subtitle').textContent = '— ' + foils.length + ' foil(s) with matching defects';
+  if (!foils.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:40px"><p>No foils match the selected types.</p></div>'; return; }
   grid.innerHTML = foils.map(fn => {
-    const defs = foilMap[fn];
-    const disp = foilDisposition(defs);
-    const status = foilStatusIcon(disp);
-    const typeCounts = {};
-    defs.forEach(d => {
-      const t = titleCase(normalizeType(d.classified_type));
-      typeCounts[t] = (typeCounts[t] || 0) + 1;
-    });
-    const breakdown = Object.entries(typeCounts).map(([t, c]) =>
-      `<span class="foil-type-tag">${c} ${t}</span>`
-    ).join('');
-    const selected = activeFoil !== null && String(activeFoil) === String(fn) ? ' selected' : '';
-
-    return `
-      <div class="foil-card${selected}" data-foil="${fn}" onclick="selectFoil('${fn}')">
-        <div class="foil-card-top">
-          <span class="foil-number">Foil ${fn}</span>
-          <div class="foil-status-badge ${status.cls}">${status.icon}</div>
-        </div>
-        <div class="foil-defect-count"><strong>${defs.length}</strong> defect${defs.length !== 1 ? 's' : ''}</div>
-        <div class="foil-breakdown">${breakdown}</div>
-        <div class="foil-disposition ${dispositionColor(disp)}">${disp}</div>
-      </div>
-    `;
+    const defs = fm[fn], disp = foilDisp(defs), st = statusIcon(disp);
+    const tc = {}; defs.forEach(d => { const t = title(norm(d.classified_type)); tc[t] = (tc[t] || 0) + 1; });
+    const tags = Object.entries(tc).map(([t, c]) => '<span class="foil-tag" style="border-left:2px solid ' + tColor(t) + '">' + c + ' ' + t + '</span>').join('');
+    const sel = activeFoil !== null && String(activeFoil) === String(fn) ? ' selected' : '';
+    return '<div class="foil-card' + sel + '" data-foil="' + fn + '" onclick="selectFoil(\'' + fn + '\')">' +
+      '<div class="foil-card-top"><span class="foil-number">Foil ' + fn + '</span><div class="foil-status ' + st.c + '">' + st.i + '</div></div>' +
+      '<div class="foil-count"><strong>' + defs.length + '</strong> defect' + (defs.length !== 1 ? 's' : '') + '</div>' +
+      '<div class="foil-tags">' + tags + '</div>' +
+      '<div class="foil-disp d-' + dispCls(disp) + '">' + disp + '</div></div>';
   }).join('');
 }
 
 function selectFoil(fn) {
-  if (activeFoil !== null && String(activeFoil) === String(fn)) {
-    clearFoilFilter();
-    return;
-  }
+  if (activeFoil !== null && String(activeFoil) === String(fn)) { closeDrawer(); return; }
   activeFoil = fn;
   renderFoilGrid();
   renderTable();
-  document.getElementById('foil-filter-label').style.display = 'inline-flex';
-  document.getElementById('foil-filter-name').textContent = 'Foil ' + fn;
-  document.getElementById('table-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  openDrawer(fn);
+  document.getElementById('foil-filter-bar').style.display = 'flex';
+  document.getElementById('filter-tag').textContent = 'Foil ' + fn;
 }
+function clearFoilFilter() { activeFoil = null; closeDrawer(); renderFoilGrid(); renderTable(); document.getElementById('foil-filter-bar').style.display = 'none'; }
 
-function clearFoilFilter() {
-  activeFoil = null;
-  document.getElementById('foil-filter-label').style.display = 'none';
-  renderFoilGrid();
-  renderTable();
+function openDrawer(fn) {
+  const drawer = document.getElementById('detail-drawer');
+  const defs = allDefects.filter(d => String(d.foil_number) === String(fn) && activeTypes.has(norm(d.classified_type)));
+  const disp = foilDisp(defs);
+  document.getElementById('drawer-title').innerHTML = 'Foil ' + fn + ' — ' + dispBadge(disp) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:400;margin-left:8px">Part ' + (report.part_number || '') + '</span>';
+
+  const maxDepth = defs.length ? Math.max(...defs.map(d => d.depth_in || 0)) : 0;
+  const avgConf = defs.length ? (defs.reduce((s, d) => s + (d.ml_confidence || 0), 0) / defs.length) : 0;
+  document.getElementById('drawer-stats').innerHTML = [
+    { l: 'Defects', v: defs.length },
+    { l: 'Max Depth', v: fmt(maxDepth, 4) + '"' },
+    { l: 'Avg ML Confidence', v: fmt(avgConf * 100, 1) + '%' },
+    { l: 'Foil Disposition', v: dispBadge(disp) },
+  ].map(s => '<div class="drawer-stat"><div class="ds-label">' + s.l + '</div><div class="ds-value">' + s.v + '</div></div>').join('');
+
+  // Bar chart — depth, length, width per defect
+  const ids = defs.map(d => d.defect_id || 'D?');
+  Plotly.react('chart-bar', [
+    { x: ids, y: defs.map(d => d.depth_in || 0), name: 'Depth', type: 'bar', marker: { color: '#ef4444' } },
+    { x: ids, y: defs.map(d => d.length_in || 0), name: 'Length', type: 'bar', marker: { color: '#3b82f6' } },
+    { x: ids, y: defs.map(d => d.width_in || 0), name: 'Width', type: 'bar', marker: { color: '#22c55e' } },
+  ], {
+    barmode: 'group', height: 220, margin: { t: 10, b: 40, l: 50, r: 10 },
+    paper_bgcolor: plotColors.paper, plot_bgcolor: plotColors.bg,
+    font: { color: plotColors.font, size: 10 },
+    xaxis: { gridcolor: plotColors.grid, tickfont: { size: 9 } },
+    yaxis: { title: 'inches', gridcolor: plotColors.grid, tickfont: { size: 9 } },
+    legend: { orientation: 'h', y: 1.15, font: { size: 10 } },
+  }, { responsive: true, displayModeBar: false });
+
+  // Pie chart — types
+  const tc = {}; defs.forEach(d => { const t = title(norm(d.classified_type)); tc[t] = (tc[t] || 0) + 1; });
+  const labels = Object.keys(tc), values = Object.values(tc), colors = labels.map(l => tColor(l));
+  Plotly.react('chart-pie', [{
+    labels: labels, values: values, type: 'pie', hole: .45,
+    marker: { colors: colors }, textfont: { color: '#fff', size: 11 },
+    hoverinfo: 'label+value+percent',
+  }], {
+    height: 220, margin: { t: 10, b: 10, l: 10, r: 10 },
+    paper_bgcolor: plotColors.paper, font: { color: plotColors.font, size: 10 },
+    showlegend: true, legend: { font: { size: 10 } },
+  }, { responsive: true, displayModeBar: false });
+
+  // Table
+  document.getElementById('drawer-tbody').innerHTML = defs.map((d, i) => {
+    const rc = d.disposition === 'SERVICEABLE' ? 'row-green' : d.disposition === 'BLEND' ? 'row-amber' : 'row-red';
+    const zones = (d.zone_names || d.zone_ids || []).join(', ') || '—';
+    const pass = d.disposition === 'SERVICEABLE';
+    return '<tr class="' + rc + '"><td>' + (i + 1) + '</td><td>' + (d.defect_id || '') + '</td><td style="color:' + tColor(d.classified_type) + '">' + title(norm(d.classified_type)) + '</td><td>' + zones + '</td><td>' + fmt(d.depth_in, 4) + '</td><td>' + fmt(d.length_in, 4) + '</td><td>' + fmt(d.width_in, 4) + '</td><td>' + dispBadge(d.disposition) + '</td><td>' + fmt(d.ml_confidence, 3) + '</td><td class="' + (pass ? 'status-pass' : 'status-fail') + '">' + (pass ? '✓' : '✗') + '</td></tr>';
+  }).join('');
+
+  drawer.classList.add('open');
+  drawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+function closeDrawer() { document.getElementById('detail-drawer').classList.remove('open'); activeFoil = null; renderFoilGrid(); renderTable(); document.getElementById('foil-filter-bar').style.display = 'none'; }
 
 function renderTable() {
-  const tbody = document.getElementById('defect-tbody');
-  const empty = document.getElementById('table-empty');
-  const defs = filteredDefects();
-
-  if (defs.length === 0) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
+  const tbody = document.getElementById('defect-tbody'), empty = document.getElementById('table-empty');
+  const defs = filtered();
+  if (!defs.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
-
   tbody.innerHTML = defs.map((d, i) => {
-    const rowCls = d.disposition === 'SERVICEABLE' ? 'row-green'
-      : d.disposition === 'BLEND' ? 'row-amber' : 'row-red';
+    const rc = d.disposition === 'SERVICEABLE' ? 'row-green' : d.disposition === 'BLEND' ? 'row-amber' : 'row-red';
     const zones = (d.zone_names || d.zone_ids || []).join(', ') || '—';
-    const isPass = d.disposition === 'SERVICEABLE';
-    const confidence = d.ml_confidence != null && d.ml_confidence !== ''
-      ? parseFloat(d.ml_confidence).toFixed(3) : '—';
-
-    return `<tr class="${rowCls}">
-      <td>${i + 1}</td>
-      <td><strong>${d.foil_number}</strong></td>
-      <td>${titleCase(normalizeType(d.classified_type))}</td>
-      <td>${zones}</td>
-      <td>${(d.depth_in || 0).toFixed(4)}</td>
-      <td>${(d.length_in || 0).toFixed(4)}</td>
-      <td>${(d.width_in || 0).toFixed(4)}</td>
-      <td>${dispositionBadge(d.disposition)}</td>
-      <td>${confidence}</td>
-      <td><span class="status-icon ${isPass ? 'pass' : 'fail'}">${isPass ? '✓' : '✗'}</span></td>
-    </tr>`;
+    const pass = d.disposition === 'SERVICEABLE';
+    return '<tr class="' + rc + '"><td>' + (i + 1) + '</td><td><strong>' + d.foil_number + '</strong></td><td style="color:' + tColor(d.classified_type) + '">' + title(norm(d.classified_type)) + '</td><td>' + zones + '</td><td>' + fmt(d.depth_in, 4) + '</td><td>' + fmt(d.length_in, 4) + '</td><td>' + fmt(d.width_in, 4) + '</td><td>' + (d.nearest_edge || '—') + '</td><td>' + dispBadge(d.disposition) + '</td><td>' + fmt(d.ml_confidence, 3) + '</td><td class="' + (pass ? 'status-pass' : 'status-fail') + '">' + (pass ? '✓' : '✗') + '</td></tr>';
   }).join('');
 }
 
 function init() {
   fetch('/api/maintenance/data')
-    .then(r => {
-      if (!r.ok) throw new Error(r.status);
-      return r.json();
-    })
-    .then(data => {
-      reportData = data;
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(data) {
+      report = data;
       allDefects = data.defects || [];
+      document.getElementById('loading-overlay').classList.remove('show');
 
-      if (allDefects.length === 0) {
-        document.getElementById('loading-overlay').classList.remove('show');
+      if (!allDefects.length) {
         document.getElementById('empty-content').style.display = 'block';
         return;
       }
 
+      var seen = {};
+      allDefects.forEach(function(d) { seen[norm(d.classified_type)] = true; });
+      TYPES = KNOWN.filter(function(t) { return seen[t.toLowerCase()]; });
+      Object.keys(seen).forEach(function(t) {
+        if (!TYPES.some(function(k) { return k.toLowerCase() === t; })) TYPES.push(title(t));
+      });
+      activeTypes = new Set(TYPES.map(function(t) { return t.toLowerCase(); }));
+
+      document.getElementById('main-content').style.display = 'block';
       buildStats();
       buildToggles();
       renderFoilGrid();
       renderTable();
-
+    })
+    .catch(function(err) {
       document.getElementById('loading-overlay').classList.remove('show');
       document.getElementById('main-content').style.display = 'block';
-    })
-    .catch(() => {
-      document.getElementById('loading-overlay').classList.remove('show');
-      document.getElementById('empty-content').style.display = 'block';
+      document.getElementById('error-banner').style.display = 'block';
+      document.getElementById('error-banner').textContent = 'Failed to load data: ' + err.message;
     });
 }
-
 init();
 </script>
 </body>

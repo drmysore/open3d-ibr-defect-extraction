@@ -297,8 +297,9 @@ async def api_sprint4_report():
 
 @app.get("/api/maintenance/data")
 async def api_maintenance_data():
-    """Lightweight payload for the maintenance view: summary + defects (no raw points)."""
-    report = _load_latest_report()
+    """Lightweight payload for the maintenance view: summary + defects (no raw points).
+    Prefers Sprint 4 report (has ML classified_type) over basic report."""
+    report = _load_latest_sprint4_report() or _load_latest_report()
     if not report:
         raise HTTPException(404, "No inspection report available. Run the pipeline first.")
     stripped_defects = []
