@@ -298,8 +298,24 @@ async def api_sprint4_report():
 @app.get("/api/maintenance/data")
 async def api_maintenance_data():
     """Lightweight payload for the maintenance view: summary + defects (no raw points).
-    Prefers Sprint 4 report (has ML classified_type) over basic report."""
-    report = _load_latest_sprint4_report() or _load_latest_report()
+    Tries all reports and picks the one with the most defects so that a fresh
+    git-pull (where all mtimes are identical) still surfaces real data."""
+    output_dir = PROJECT_ROOT / "output"
+    best, best_count = None, -1
+    for f in output_dir.glob("*.json"):
+        if f.name.endswith("_features_metadata.json"):
+            continue
+        try:
+            with open(f) as fh:
+                data = json.load(fh)
+            n = len(data.get("defects", []))
+            has_ml = any(d.get("classified_type") for d in data.get("defects", [])[:3])
+            score = n * 10 + (5 if has_ml else 0) + (3 if data.get("sprint4") else 0)
+            if score > best_count:
+                best, best_count = data, score
+        except Exception:
+            continue
+    report = best
     if not report:
         raise HTTPException(404, "No inspection report available. Run the pipeline first.")
     stripped_defects = []
