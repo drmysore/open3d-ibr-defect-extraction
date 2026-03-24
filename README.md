@@ -96,8 +96,10 @@ python -m uvicorn web.app:app --host 127.0.0.1 --port 8000
 | `/inferno-viewer` | Inferno 3D |
 | `/comparison` | Viewer comparison |
 | **`/gallery`** | **2D views gallery** (PNGs under `output/2d_views/`) |
+| **`/maintenance`** | **Maintenance inspection view** — foil-by-foil health, defect-type toggles, pass/fail indicators |
 | `GET /api/2d-views` | JSON list of generated 2D view filenames |
 | `GET /api/2d-views/{filename}` | Serve a single image |
+| `GET /api/maintenance/data` | Lightweight defect + summary payload for maintenance view |
 
 If `/gallery` is missing, confirm you are on **`inferno_j4`**, restart Uvicorn, and hard-refresh the browser.
 
