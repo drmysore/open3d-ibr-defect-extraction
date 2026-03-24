@@ -153,6 +153,18 @@ async def comparison_page(request: Request):
     return templates.TemplateResponse("comparison.html", {"request": request})
 
 
+@app.get("/gallery", response_class=HTMLResponse)
+async def gallery_page(request: Request):
+    """Visual gallery for generated 2D PNG views."""
+    return templates.TemplateResponse("image_gallery.html", {"request": request})
+
+
+@app.get("/maintenance", response_class=HTMLResponse)
+async def maintenance_page(request: Request):
+    """Maintenance technician view with foil-by-foil inspection and defect-type toggles."""
+    return templates.TemplateResponse("maintenance.html", {"request": request})
+
+
 # ----- API Endpoints -----
 
 @app.get("/api/report/latest")
@@ -281,6 +293,42 @@ async def api_sprint4_report():
     if not report:
         raise HTTPException(404, "No Sprint 4 report found")
     return report
+
+
+@app.get("/api/maintenance/data")
+async def api_maintenance_data():
+    """Lightweight payload for the maintenance view: summary + defects (no raw points)."""
+    report = _load_latest_report()
+    if not report:
+        raise HTTPException(404, "No inspection report available. Run the pipeline first.")
+    stripped_defects = []
+    for d in report.get("defects", []):
+        stripped_defects.append({
+            "defect_id": d.get("defect_id"),
+            "foil_number": d.get("foil_number"),
+            "classified_type": d.get("classified_type") or d.get("defect_type") or d.get("classification", "unknown"),
+            "zone_ids": d.get("zone_ids", []),
+            "zone_names": d.get("zone_names", []),
+            "depth_in": d.get("depth_in", 0),
+            "length_in": d.get("length_in", 0),
+            "width_in": d.get("width_in", 0),
+            "disposition": d.get("disposition", "N/A"),
+            "ml_prediction": d.get("ml_prediction"),
+            "ml_confidence": d.get("ml_confidence"),
+            "classification": d.get("classification"),
+            "nearest_edge": d.get("nearest_edge"),
+            "edge_distance_mm": d.get("edge_distance_mm"),
+        })
+    return {
+        "part_number": report.get("part_number"),
+        "total_defects": report.get("total_defects", len(stripped_defects)),
+        "foil_count": report.get("foil_count", 0),
+        "overall_disposition": report.get("overall_disposition", "N/A"),
+        "timestamp": report.get("timestamp"),
+        "scan_file": report.get("scan_file"),
+        "disposition_breakdown": report.get("disposition_breakdown", {}),
+        "defects": stripped_defects,
+    }
 
 
 @app.get("/api/2d-views")

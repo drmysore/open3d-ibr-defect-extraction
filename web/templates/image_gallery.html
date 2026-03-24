@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2D Views Gallery — IBR Defect Extraction</title>
+<style>
+  :root{
+    --bg:#0a0e17;--surface:#131a2b;--surface2:#1a2338;--border:#2a3654;
+    --text:#e2e8f0;--text-muted:#8892a4;--accent:#3b82f6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text)}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:24px}
+  .topbar h1{font-size:18px;font-weight:700}.topbar h1 span{color:var(--accent)}
+  .topbar nav{display:flex;gap:16px;margin-left:auto}
+  .topbar nav a{color:var(--text-muted);font-size:13px;font-weight:500;padding:6px 14px;border-radius:6px;transition:all .15s}
+  .topbar nav a:hover,.topbar nav a.active{color:var(--text);background:var(--surface2);text-decoration:none}
+  .container{max-width:1400px;margin:0 auto;padding:24px 32px}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .header h2{font-size:18px}
+  .meta{color:var(--text-muted);font-size:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .card .img-wrap{background:#060a12;display:flex;align-items:center;justify-content:center;min-height:220px}
+  .card img{width:100%;height:auto;display:block}
+  .card .body{padding:12px}
+  .card .name{font-size:13px;font-weight:600;word-break:break-all}
+  .card .links{margin-top:8px;display:flex;gap:10px}
+  .pill{font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface2)}
+  .loading{padding:40px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span>IBR</span> Defect Extraction System</h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/viewer3d">3D Viewer</a>
+    <a href="/reports">Reports</a>
+    <a href="/phase-viewer">Phase Viewer</a>
+    <a href="/inferno-viewer">Inferno 3D</a>
+    <a href="/comparison">Compare</a>
+    <a href="/gallery" class="active">Gallery</a>
+    <a href="/maintenance">Maintenance</a>
+  </nav>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h2>Generated 2D Views</h2>
+    <div id="meta" class="meta">Loading...</div>
+  </div>
+  <div id="grid" class="grid"></div>
+  <div id="loading" class="loading">Fetching images from <code>/api/2d-views</code>...</div>
+</div>
+
+<script>
+async function loadGallery() {
+  const loading = document.getElementById('loading');
+  const grid = document.getElementById('grid');
+  const meta = document.getElementById('meta');
+  try {
+    const res = await fetch('/api/2d-views');
+    if (!res.ok) throw new Error('Failed to fetch 2D views');
+    const payload = await res.json();
+    const files = (payload.files || []).filter(f => /\.png$/i.test(f));
+    meta.textContent = `${files.length} PNG image(s)`;
+    grid.innerHTML = files.map(name => `
+      <div class="card">
+        <div class="img-wrap">
+          <img loading="lazy" src="/api/2d-views/${encodeURIComponent(name)}" alt="${name}">
+        </div>
+        <div class="body">
+          <div class="name">${name}</div>
+          <div class="links">
+            <a class="pill" href="/api/2d-views/${encodeURIComponent(name)}" target="_blank">Open</a>
+            <a class="pill" href="/api/2d-views/${encodeURIComponent(name)}" download="${name}">Download</a>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    loading.style.display = files.length ? 'none' : 'block';
+    if (!files.length) loading.textContent = 'No PNG files found in output/2d_views.';
+  } catch (e) {
+    loading.textContent = `Error: ${e.message}`;
+    meta.textContent = 'Load failed';
+  }
+}
+loadGallery();
+</script>
+</body>
+</html>
