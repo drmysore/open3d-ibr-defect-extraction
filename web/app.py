@@ -35,6 +35,16 @@ if STATIC_DIR.exists():
 pipeline_status = {"running": False, "progress": "", "last_result": None}
 
 
+def _render(request: Request, template_name: str, context: dict = None):
+    """Starlette TemplateResponse compat wrapper — works with both old and new API."""
+    ctx = context or {}
+    try:
+        return templates.TemplateResponse(request=request, name=template_name, context=ctx)
+    except TypeError:
+        ctx["request"] = request
+        return templates.TemplateResponse(template_name, ctx)
+
+
 def _load_latest_report():
     output_dir = PROJECT_ROOT / "output"
     json_files = sorted(output_dir.glob("*.json"), key=os.path.getmtime, reverse=True)
@@ -108,8 +118,7 @@ def _compute_deviations_for_viz(scan_path, cad_path, max_points=30000):
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     report = _load_latest_report()
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
+    return _render(request, "dashboard.html", {
         "report": report,
         "has_report": report is not None,
     })
@@ -117,7 +126,7 @@ async def dashboard(request: Request):
 
 @app.get("/viewer3d", response_class=HTMLResponse)
 async def viewer_3d(request: Request):
-    return templates.TemplateResponse("viewer3d.html", {"request": request})
+    return _render(request, "viewer3d.html")
 
 
 @app.get("/reports", response_class=HTMLResponse)
@@ -137,37 +146,34 @@ async def reports_page(request: Request):
             "disposition": data.get("overall_disposition", ""),
             "total_defects": data.get("total_defects", 0),
         })
-    return templates.TemplateResponse("reports.html", {
-        "request": request,
-        "reports": reports,
-    })
+    return _render(request, "reports.html", {"reports": reports})
 
 
 @app.get("/inferno-viewer", response_class=HTMLResponse)
 async def inferno_viewer(request: Request):
-    return templates.TemplateResponse("inferno_viewer.html", {"request": request})
+    return _render(request, "inferno_viewer.html")
 
 
 @app.get("/comparison", response_class=HTMLResponse)
 async def comparison_page(request: Request):
-    return templates.TemplateResponse("comparison.html", {"request": request})
+    return _render(request, "comparison.html")
 
 
 @app.get("/gallery", response_class=HTMLResponse)
 async def gallery_page(request: Request):
     """Visual gallery for generated 2D PNG views."""
-    return templates.TemplateResponse("image_gallery.html", {"request": request})
+    return _render(request, "image_gallery.html")
 
 
 @app.get("/maintenance", response_class=HTMLResponse)
 async def maintenance_page(request: Request):
     """Maintenance technician view with foil-by-foil inspection and defect-type toggles."""
-    return templates.TemplateResponse("maintenance.html", {"request": request})
+    return _render(request, "maintenance.html")
 
 
 @app.get("/quality-audits", response_class=HTMLResponse)
 async def quality_audits_page(request: Request):
-    return templates.TemplateResponse("quality_audits.html", {"request": request})
+    return _render(request, "quality_audits.html")
 
 
 # ----- API Endpoints -----
@@ -404,7 +410,7 @@ async def api_features_metadata():
 
 @app.get("/phase-viewer", response_class=HTMLResponse)
 async def phase_viewer(request: Request):
-    return templates.TemplateResponse("phase_viewer.html", {"request": request})
+    return _render(request, "phase_viewer.html")
 
 
 @app.get("/api/phases")
