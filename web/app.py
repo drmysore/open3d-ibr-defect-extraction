@@ -165,6 +165,11 @@ async def maintenance_page(request: Request):
     return templates.TemplateResponse("maintenance.html", {"request": request})
 
 
+@app.get("/quality-audits", response_class=HTMLResponse)
+async def quality_audits_page(request: Request):
+    return templates.TemplateResponse("quality_audits.html", {"request": request})
+
+
 # ----- API Endpoints -----
 
 @app.get("/api/report/latest")
