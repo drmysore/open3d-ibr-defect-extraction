@@ -1,0 +1,1233 @@
+{
+  "version": "2.0.0",
+  "program": "F135",
+  "description": "Hierarchical IBR defect disposition rules from P&W inspection manual",
+  "areas": {
+    "A1": {
+      "name": "Airfoil Leading Edge (inner half)",
+      "edge_type": "LE",
+      "severity": "CRITICAL"
+    },
+    "A2": {
+      "name": "Airfoil Leading Edge (mid)",
+      "edge_type": "LE",
+      "severity": "CRITICAL"
+    },
+    "A3": {
+      "name": "Airfoil Leading Edge (outer)",
+      "edge_type": "LE",
+      "severity": "CRITICAL"
+    },
+    "B1": {
+      "name": "Airfoil Trailing Edge (inner)",
+      "edge_type": "TE",
+      "severity": "CRITICAL"
+    },
+    "B2": {
+      "name": "Airfoil Trailing Edge (mid)",
+      "edge_type": "TE",
+      "severity": "CRITICAL"
+    },
+    "B3": {
+      "name": "Airfoil Trailing Edge (outer)",
+      "edge_type": "TE",
+      "severity": "CRITICAL"
+    },
+    "C1": {
+      "name": "Airfoil Convex Surface (inner)",
+      "type": "surface",
+      "severity": "STANDARD"
+    },
+    "C2": {
+      "name": "Airfoil Convex Surface (mid-inner)",
+      "type": "surface",
+      "severity": "STANDARD"
+    },
+    "C3": {
+      "name": "Airfoil Convex Surface (mid-outer)",
+      "type": "surface",
+      "severity": "STANDARD"
+    },
+    "C4": {
+      "name": "Airfoil Convex Surface (outer)",
+      "type": "surface",
+      "severity": "STANDARD"
+    },
+    "D1": {
+      "name": "Airfoil Concave Surface (inner)",
+      "type": "surface",
+      "severity": "STANDARD"
+    },
+    "D2": {
+      "name": "Airfoil Concave Surface (mid-inner)",
+      "type": "surface",
+      "severity": "STANDARD"
+    },
+    "D3": {
+      "name": "Airfoil Concave Surface (mid-outer)",
+      "type": "surface",
+      "severity": "STANDARD"
+    },
+    "D4": {
+      "name": "Airfoil Concave Surface (outer)",
+      "type": "surface",
+      "severity": "STANDARD"
+    },
+    "E1": {
+      "name": "Airfoil ID Fillet Radius",
+      "type": "fillet",
+      "severity": "HIGH"
+    },
+    "E2a": {
+      "name": "Airfoil ID Fillet Radius (a)",
+      "type": "fillet",
+      "severity": "HIGH"
+    },
+    "E2b": {
+      "name": "Airfoil ID Fillet Radius (b)",
+      "type": "fillet",
+      "severity": "HIGH"
+    },
+    "E2c": {
+      "name": "Airfoil ID Fillet Radius (c)",
+      "type": "fillet",
+      "severity": "HIGH"
+    },
+    "E2d": {
+      "name": "Airfoil ID Fillet Radius (d)",
+      "type": "fillet",
+      "severity": "HIGH"
+    },
+    "E3": {
+      "name": "Airfoil TE ID Fillet Radius",
+      "type": "fillet",
+      "severity": "HIGH"
+    },
+    "G1": {
+      "name": "Airfoil LE Tip Corner",
+      "edge_type": "LE",
+      "type": "tip_corner",
+      "severity": "CRITICAL"
+    },
+    "G2": {
+      "name": "Airfoil TE Tip Corner",
+      "edge_type": "TE",
+      "type": "tip_corner",
+      "severity": "CRITICAL"
+    },
+    "H": {
+      "name": "Airfoil Tip",
+      "type": "tip",
+      "severity": "CRITICAL"
+    },
+    "J": {
+      "name": "Platform",
+      "type": "platform",
+      "severity": "STANDARD"
+    }
+  },
+  "rule_sets": [
+    {
+      "rule_set_id": "RS-001",
+      "title": "A2 Leading Edge Scratches",
+      "primary_area": "A2",
+      "edge": "LE",
+      "defect_types": ["scratch"],
+      "rule_blocks": [
+        {
+          "block_id": "1a",
+          "priority": true,
+          "description": "Scratches on A2 LE with depth at or below 0.001 in. If scratches are separated by less than 0.015 in they are counted as a single scratch with combined length.",
+          "rules": [
+            {
+              "rule_id": "R-001a",
+              "description": "Scratches separated by less than 0.015 in count as one defect by summing their lengths",
+              "areas": ["A2"],
+              "edge": "LE",
+              "defect_types": ["scratch"],
+              "local_max": null,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.001,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": true,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": 0.015,
+              "notes": "Priority rule — evaluate first. Scratches within 0.015 in merge into a single defect with summed length."
+            }
+          ]
+        },
+        {
+          "block_id": "1",
+          "priority": false,
+          "description": "Standard scratch limits for A2 LE after merge logic applied.",
+          "rules": [
+            {
+              "rule_id": "R-001",
+              "description": "Max 4 scratches per airfoil, 20 across 10 airfoils. Cannot cross edge. Max depth 0.002 in, max length 0.170 in.",
+              "areas": ["A2"],
+              "edge": "LE",
+              "defect_types": ["scratch"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.002,
+              "max_length_in": 0.170,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": true,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Scratches must not cross the leading edge from convex to concave side."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-002",
+      "title": "B1+B2+B3 Trailing Edge Nicks/Dents (Rule 2)",
+      "primary_area": "B1",
+      "edge": "TE",
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "2",
+          "priority": false,
+          "description": "Damage contacting trailing edge extending into both concave and convex sides across B1, B2, B3.",
+          "rules": [
+            {
+              "rule_id": "R-002",
+              "description": "2 max combined across B1/B2/B3. Max depth 0.020 in chordwise measured from TE. Damage may extend concave to convex. Min separation 0.250 in.",
+              "areas": ["B1", "B2", "B3"],
+              "edge": "TE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 2,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.020,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": 0.250,
+              "direction": "chordwise",
+              "concave_to_convex": true,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Damage contacting trailing edge extending into both concave and convex surfaces."
+            }
+          ]
+        },
+        {
+          "block_id": "2a",
+          "priority": false,
+          "description": "Secondary TE nick/dent limits for B1/B2/B3 with smaller depth allowance.",
+          "rules": [
+            {
+              "rule_id": "R-002a",
+              "description": "8 max nicks/dents. Max depth 0.010 in chordwise. Concave to convex allowed. Min separation must exceed depth of deepest flaw. Round-bottom flaws at or below 0.002 in may be ignored.",
+              "areas": ["B1", "B2", "B3"],
+              "edge": "TE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 8,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.010,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": "chordwise",
+              "concave_to_convex": true,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Min separation is dynamic — must exceed depth of the deepest flaw in the set."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-003",
+      "title": "B1+B2+B3 Trailing Edge Nicks/Dents (Rule 3)",
+      "primary_area": "B1",
+      "edge": "TE",
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "3",
+          "priority": false,
+          "description": "TE nicks/dents across B1/B2/B3 with pair and global limits.",
+          "rules": [
+            {
+              "rule_id": "R-003",
+              "description": "2 per pair of adjacent areas or 4 max combined across B1/B2/B3. 20 max across 10 airfoils. Max depth 0.020 in. Concave to convex allowed. Min separation 0.250 in.",
+              "areas": ["B1", "B2", "B3"],
+              "edge": "TE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "local_max_per_pair": 2,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.020,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": 0.250,
+              "direction": "chordwise",
+              "concave_to_convex": true,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "2 per adjacent-area pair or 4 total across all three trailing edge zones."
+            }
+          ]
+        },
+        {
+          "block_id": "3a",
+          "priority": false,
+          "description": "Extended TE nick/dent limits with deeper-flaw separation logic.",
+          "rules": [
+            {
+              "rule_id": "R-003a",
+              "description": "8 max nicks/dents across B1/B2/B3. 20 max across 10 airfoils. Max depth 0.010 in. Min separation exceeds deepest flaw or 0.250 in (whichever greater). Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["B1", "B2", "B3"],
+              "edge": "TE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 8,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.010,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw_or_0.250",
+              "direction": "chordwise",
+              "concave_to_convex": true,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Min separation is the greater of the deepest flaw depth or 0.250 in."
+            }
+          ]
+        },
+        {
+          "block_id": "3b",
+          "priority": false,
+          "description": "Cross-area shallow nick/dent rule spanning edges and tip areas.",
+          "rules": [
+            {
+              "rule_id": "R-003b",
+              "description": "4 max per airfoil across A2+A3+B2+B3+G1+G2+H. 20 max across 10 airfoils. Max depth 0.005 in round bottom only — sharp bottom NOT serviceable. Min separation exceeds deepest flaw. Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["A2", "A3", "B2", "B3", "G1", "G2", "H"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.005,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Shared limit pool across leading edge, trailing edge, and tip areas. Sharp-bottom defects are NOT serviceable."
+            }
+          ]
+        },
+        {
+          "block_id": "3d",
+          "priority": false,
+          "description": "E3 fillet nick/dent overflow rule when depth exceeds 0.004 in up to 0.005 in, combined with rule 3b areas.",
+          "rules": [
+            {
+              "rule_id": "R-003d",
+              "description": "When E3 nick/dent depth exceeds 0.004 in (up to 0.005 in), count is combined with rule 3b areas (A2+A3+B2+B3+G1+G2+H). 4 max per airfoil, 20 across 10 airfoils.",
+              "areas": ["A2", "A3", "B2", "B3", "E3", "G1", "G2", "H"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.005,
+              "min_depth_in": 0.004,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "E3 defects deeper than 0.004 in share the count pool with 3b cross-area limits."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-004",
+      "title": "E3 TE Fillet Nicks/Dents (Rule 4)",
+      "primary_area": "E3",
+      "edge": "TE",
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "4",
+          "priority": false,
+          "description": "E3 fillet nicks/dents counted across all fillet zones.",
+          "rules": [
+            {
+              "rule_id": "R-004",
+              "description": "4 max combined across E1+E2a+E2b+E2c+E2d+E3. 20 max across 10 airfoils. Max depth 0.005 in round bottom — sharp NOT serviceable. Min separation exceeds deepest flaw. Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["E1", "E2a", "E2b", "E2c", "E2d", "E3"],
+              "edge": "TE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.005,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Shared count pool across all fillet radius zones E1 through E3."
+            }
+          ]
+        },
+        {
+          "block_id": "4-overflow",
+          "priority": false,
+          "description": "E3 fillet depth overflow: when depth exceeds 0.004 in up to 0.005 in, combine with cross-area pool.",
+          "rules": [
+            {
+              "rule_id": "R-004-overflow",
+              "description": "For E3 depth > 0.004 in to 0.005 in: 4 max combined across A2+A3+B2+B3+E3+G1+G2+H. 20 max across 10 airfoils.",
+              "areas": ["A2", "A3", "B2", "B3", "E3", "G1", "G2", "H"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.005,
+              "min_depth_in": 0.004,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Depth overflow from fillet into the shared cross-area count pool."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-005",
+      "title": "G1 LE Tip Corner Nicks/Dents (Rule 5)",
+      "primary_area": "G1",
+      "edge": "LE",
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "5",
+          "priority": false,
+          "description": "G1 LE tip corner nicks/dents using 3b cross-area pool.",
+          "rules": [
+            {
+              "rule_id": "R-005",
+              "description": "4 max across A2+A3+B2+B3+G1+G2+H. 20 max across 10 airfoils. Max depth 0.005 in round bottom — sharp NOT serviceable. Min separation exceeds deepest flaw. Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["A2", "A3", "B2", "B3", "G1", "G2", "H"],
+              "edge": "LE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.005,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Same cross-area pool as rule 3b. Sharp-bottom defects NOT serviceable."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-006",
+      "title": "H Tip Nicks/Dents (Rule 6)",
+      "primary_area": "H",
+      "edge": null,
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "6a",
+          "priority": false,
+          "description": "Large tip nicks/dents measured spanwise.",
+          "rules": [
+            {
+              "rule_id": "R-006a",
+              "description": "2 max nicks/dents on tip. Max depth 0.030 in spanwise. Concave to convex allowed. Min separation 0.250 in.",
+              "areas": ["H"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 2,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.030,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": 0.250,
+              "direction": "spanwise",
+              "concave_to_convex": true,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Depth measured in spanwise direction from tip."
+            }
+          ]
+        },
+        {
+          "block_id": "6b",
+          "priority": false,
+          "description": "Moderate tip nicks/dents with dynamic separation.",
+          "rules": [
+            {
+              "rule_id": "R-006b",
+              "description": "8 max nicks/dents on tip. Max depth 0.010 in spanwise. Min separation exceeds deepest flaw. Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["H"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 8,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.010,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": "spanwise",
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Min separation is dynamic — must exceed depth of the deepest flaw."
+            }
+          ]
+        },
+        {
+          "block_id": "6c",
+          "priority": false,
+          "description": "Tip nicks/dents in cross-area pool.",
+          "rules": [
+            {
+              "rule_id": "R-006c",
+              "description": "4 max across A2+A3+B2+B3+G1+G2+H. 20 max across 10 airfoils. Max depth 0.005 in round bottom — sharp NOT serviceable.",
+              "areas": ["A2", "A3", "B2", "B3", "G1", "G2", "H"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.005,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Same cross-area pool as rule 3b / rule 5."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-007",
+      "title": "A2 LE Nicks/Dents (Rule 7)",
+      "primary_area": "A2",
+      "edge": "LE",
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "7a",
+          "priority": false,
+          "description": "Large LE nicks/dents combined across A2+A3.",
+          "rules": [
+            {
+              "rule_id": "R-007a",
+              "description": "2 max combined across A2+A3. Max depth 0.015 in chordwise. Concave to convex allowed. Min separation 0.250 in.",
+              "areas": ["A2", "A3"],
+              "edge": "LE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 2,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.015,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": 0.250,
+              "direction": "chordwise",
+              "concave_to_convex": true,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Combined count across A2 and A3 leading edge zones."
+            }
+          ]
+        },
+        {
+          "block_id": "7b",
+          "priority": false,
+          "description": "Moderate LE nicks/dents on A2 with dynamic separation.",
+          "rules": [
+            {
+              "rule_id": "R-007b",
+              "description": "8 max nicks/dents on A2. Max depth 0.010 in chordwise. Min separation exceeds deepest flaw. Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["A2"],
+              "edge": "LE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 8,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.010,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": "chordwise",
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Min separation is dynamic — must exceed depth of the deepest flaw."
+            }
+          ]
+        },
+        {
+          "block_id": "7c",
+          "priority": false,
+          "description": "A2 LE nicks/dents in cross-area pool.",
+          "rules": [
+            {
+              "rule_id": "R-007c",
+              "description": "4 max across A2+A3+B2+B3+G1+G2+H. 20 max across 10 airfoils. Max depth 0.005 in round bottom — sharp NOT serviceable.",
+              "areas": ["A2", "A3", "B2", "B3", "G1", "G2", "H"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.005,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Same cross-area pool as rule 3b."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-008",
+      "title": "A1 LE Nicks/Dents (Rule 8)",
+      "primary_area": "A1",
+      "edge": "LE",
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "8",
+          "priority": false,
+          "description": "Inner half leading edge nicks/dents — tighter depth limit.",
+          "rules": [
+            {
+              "rule_id": "R-008",
+              "description": "8 max nicks/dents on A1. Max depth 0.003 in chordwise. Concave to convex allowed. Min separation exceeds deepest flaw. Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["A1"],
+              "edge": "LE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 8,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.003,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": "chordwise",
+              "concave_to_convex": true,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Inner half LE has tighter 0.003 in depth limit compared to mid/outer zones."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-009",
+      "title": "A3 LE Nicks/Dents (Rule 9)",
+      "primary_area": "A3",
+      "edge": "LE",
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "9a",
+          "priority": false,
+          "description": "Large outer LE nicks/dents combined across A2+A3.",
+          "rules": [
+            {
+              "rule_id": "R-009a",
+              "description": "2 max combined across A2+A3. Max depth 0.030 in chordwise. Concave to convex allowed. Min separation 0.250 in.",
+              "areas": ["A2", "A3"],
+              "edge": "LE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 2,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.030,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": 0.250,
+              "direction": "chordwise",
+              "concave_to_convex": true,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Outer LE allows deeper 0.030 in depth than mid-LE (0.015 in)."
+            }
+          ]
+        },
+        {
+          "block_id": "9b",
+          "priority": false,
+          "description": "Moderate outer LE nicks/dents with dynamic separation.",
+          "rules": [
+            {
+              "rule_id": "R-009b",
+              "description": "8 max nicks/dents on A3. Max depth 0.010 in chordwise. Min separation exceeds deepest flaw. Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["A3"],
+              "edge": "LE",
+              "defect_types": ["nick", "dent"],
+              "local_max": 8,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.010,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": "chordwise",
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Min separation is dynamic — must exceed depth of the deepest flaw."
+            }
+          ]
+        },
+        {
+          "block_id": "9c",
+          "priority": false,
+          "description": "A3 LE nicks/dents in cross-area pool.",
+          "rules": [
+            {
+              "rule_id": "R-009c",
+              "description": "4 max across A2+A3+B2+B3+G1+G2+H. 20 max across 10 airfoils. Max depth 0.005 in round bottom — sharp NOT serviceable.",
+              "areas": ["A2", "A3", "B2", "B3", "G1", "G2", "H"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.005,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Same cross-area pool as rule 3b."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-010",
+      "title": "G2 TE Tip Corner Curled Tips",
+      "primary_area": "G2",
+      "edge": "TE",
+      "defect_types": ["curled_tip"],
+      "rule_blocks": [
+        {
+          "block_id": "10",
+          "priority": false,
+          "description": "Curled tip allowance on G2 TE tip corner.",
+          "rules": [
+            {
+              "rule_id": "R-010",
+              "description": "1 curled tip per airfoil. Max 10 airfoils affected. Max depth 0.025 in measured chordwise and spanwise.",
+              "areas": ["G2"],
+              "edge": "TE",
+              "defect_types": ["curled_tip"],
+              "local_max": 1,
+              "global_max": 10,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.025,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": "chordwise_and_spanwise",
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Max depth applies to both chordwise and spanwise measurement directions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-011",
+      "title": "E2d Fillet Nicks/Dents",
+      "primary_area": "E2d",
+      "edge": null,
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "11",
+          "priority": false,
+          "description": "E2d fillet nicks/dents counted across all fillet zones.",
+          "rules": [
+            {
+              "rule_id": "R-011",
+              "description": "4 max combined across E1+E2a+E2b+E2c+E2d+E3. 20 max across 10 airfoils. Max depth 0.004 in round bottom — sharp NOT serviceable. Min separation exceeds deepest flaw. Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["E1", "E2a", "E2b", "E2c", "E2d", "E3"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.004,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "E2d limit is 0.004 in vs E3 at 0.005 in. Shared count pool across all fillet zones."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-012",
+      "title": "D4 Concave Surface Nicks/Dents",
+      "primary_area": "D4",
+      "edge": null,
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "12",
+          "priority": false,
+          "description": "Concave surface nicks/dents across all D zones.",
+          "rules": [
+            {
+              "rule_id": "R-012",
+              "description": "8 max combined across D1+D2+D3+D4. Max depth 0.005 in round bottom. Min separation equals depth of deepest flaw. Ignore round-bottom flaws at or below 0.002 in.",
+              "areas": ["D1", "D2", "D3", "D4"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": 8,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.005,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": "deepest_flaw",
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": 0.002,
+              "merge_if_separation_below": null,
+              "notes": "Covers all four concave surface zones."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-013",
+      "title": "D4 Concave Surface Scratches",
+      "primary_area": "D4",
+      "edge": null,
+      "defect_types": ["scratch"],
+      "rule_blocks": [
+        {
+          "block_id": "13a",
+          "priority": true,
+          "description": "Scratch merge logic for concave surface — same as LE scratch merge rule.",
+          "rules": [
+            {
+              "rule_id": "R-013a",
+              "description": "Scratches separated by less than 0.015 in count as one defect by summing their lengths.",
+              "areas": ["D4"],
+              "edge": null,
+              "defect_types": ["scratch"],
+              "local_max": null,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": null,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": true,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": 0.015,
+              "notes": "Priority rule — evaluate first. Scratches within 0.015 in merge into a single defect with summed length."
+            }
+          ]
+        },
+        {
+          "block_id": "13",
+          "priority": false,
+          "description": "Standard scratch limits for D4 concave surface.",
+          "rules": [
+            {
+              "rule_id": "R-013",
+              "description": "4 scratches per airfoil, 20 across 10 airfoils. Cannot cross surface boundary. Max depth 0.002 in, max length 0.170 in.",
+              "areas": ["D4"],
+              "edge": null,
+              "defect_types": ["scratch"],
+              "local_max": 4,
+              "global_max": 20,
+              "global_check_airfoils": 10,
+              "max_depth_in": 0.002,
+              "max_length_in": 0.170,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": true,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Scratches must not cross surface zone boundaries."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-014",
+      "title": "G1+G2+H Abradable Buildup",
+      "primary_area": "G1",
+      "edge": null,
+      "defect_types": ["abradable_buildup"],
+      "rule_blocks": [
+        {
+          "block_id": "14a",
+          "priority": false,
+          "description": "Abradable buildup with triangular profile on up to 9 airfoils.",
+          "rules": [
+            {
+              "rule_id": "R-014a",
+              "description": "Max 0.090 in combined depth+length (triangular profile) allowed on up to 9 airfoils.",
+              "areas": ["G1", "G2", "H"],
+              "edge": null,
+              "defect_types": ["abradable_buildup"],
+              "local_max": null,
+              "global_max": 9,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.090,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "profile": "triangular",
+              "max_combined_depth_length_in": 0.090,
+              "max_affected_airfoils": 9,
+              "notes": "0.090 in is the combined depth+length for a triangular buildup profile on up to 9 airfoils."
+            }
+          ]
+        },
+        {
+          "block_id": "14b",
+          "priority": false,
+          "description": "Smaller abradable buildup with no airfoil count restriction.",
+          "rules": [
+            {
+              "rule_id": "R-014b",
+              "description": "Max 0.060 in combined depth+length — no airfoil count restriction.",
+              "areas": ["G1", "G2", "H"],
+              "edge": null,
+              "defect_types": ["abradable_buildup"],
+              "local_max": null,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.060,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "profile": null,
+              "max_combined_depth_length_in": 0.060,
+              "max_affected_airfoils": null,
+              "notes": "No airfoil count restriction at 0.060 in or below."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-015",
+      "title": "H Tip Nicks/Dents (Near-Tip)",
+      "primary_area": "H",
+      "edge": null,
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "15",
+          "priority": false,
+          "description": "H tip nicks/dents near the tip edge — spanwise proximity limit.",
+          "rules": [
+            {
+              "rule_id": "R-015",
+              "description": "Max depth 0.010 in. Must be within 0.010 in from tip spanwise. Min chordwise separation exceeds depth of deepest flaw.",
+              "areas": ["H"],
+              "edge": null,
+              "defect_types": ["nick", "dent"],
+              "local_max": null,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.010,
+              "max_length_in": null,
+              "max_width_in": null,
+              "max_from_tip_spanwise_in": 0.010,
+              "min_separation_in": "deepest_flaw",
+              "min_separation_direction": "chordwise",
+              "direction": "spanwise",
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Applies to nicks/dents within 0.010 in from the tip measured spanwise. Chordwise separation must exceed deepest flaw."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-016",
+      "title": "J Platform Nicks/Scratches",
+      "primary_area": "J",
+      "edge": null,
+      "defect_types": ["nick", "scratch"],
+      "rule_blocks": [
+        {
+          "block_id": "16a",
+          "priority": false,
+          "description": "Standard platform nick/scratch limits.",
+          "rules": [
+            {
+              "rule_id": "R-016a",
+              "description": "Max depth 0.005 in, max length 0.190 in for nicks and scratches on platform.",
+              "areas": ["J"],
+              "edge": null,
+              "defect_types": ["nick", "scratch"],
+              "local_max": null,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.005,
+              "max_length_in": 0.190,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Primary platform defect limit."
+            }
+          ]
+        },
+        {
+          "block_id": "16b",
+          "priority": false,
+          "description": "Alternate platform limit — shallower depth, longer allowed length.",
+          "rules": [
+            {
+              "rule_id": "R-016b",
+              "description": "Max depth 0.001 in, max length 1.000 in for very shallow platform nicks and scratches.",
+              "areas": ["J"],
+              "edge": null,
+              "defect_types": ["nick", "scratch"],
+              "local_max": null,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.001,
+              "max_length_in": 1.000,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "notes": "Alternate limit — very shallow defects up to 1.000 in length are allowed."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rule_set_id": "RS-017",
+      "title": "Out-of-Plane Deformation (Inner Half LE+TE)",
+      "primary_area": "A1",
+      "edge": null,
+      "defect_types": ["out_of_plane_deformation"],
+      "rule_blocks": [
+        {
+          "block_id": "17",
+          "priority": true,
+          "description": "Out-of-plane deformation on inner half leading and trailing edges — NOT serviceable, repairable within area limits.",
+          "rules": [
+            {
+              "rule_id": "R-017",
+              "description": "Out-of-plane deformation on inner half LE and TE is NOT serviceable as-is. May be repairable within the defined area limits for those zones.",
+              "areas": ["A1", "B1"],
+              "edge": null,
+              "defect_types": ["out_of_plane_deformation"],
+              "local_max": 0,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": null,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": false,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "serviceable": false,
+              "repairable": true,
+              "repair_note": "May be repaired if resulting geometry falls within the established area limits for A1/B1.",
+              "notes": "NOT serviceable as-found. Repair disposition required."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "shared_count_pools": {
+    "cross_area_pool_3b": {
+      "description": "Shared defect count pool across leading edge, trailing edge, and tip areas for shallow (<=0.005 in) round-bottom nicks/dents",
+      "areas": ["A2", "A3", "B2", "B3", "G1", "G2", "H"],
+      "local_max": 4,
+      "global_max": 20,
+      "global_check_airfoils": 10,
+      "max_depth_in": 0.005,
+      "sharp_bottom_serviceable": false,
+      "referenced_by": ["R-003b", "R-005", "R-006c", "R-007c", "R-009c"]
+    },
+    "fillet_pool": {
+      "description": "Shared defect count pool across all fillet radius zones E1 through E3",
+      "areas": ["E1", "E2a", "E2b", "E2c", "E2d", "E3"],
+      "local_max": 4,
+      "global_max": 20,
+      "global_check_airfoils": 10,
+      "referenced_by": ["R-004", "R-011"]
+    },
+    "cross_area_pool_with_E3": {
+      "description": "Extended cross-area pool including E3 fillet when depth exceeds 0.004 in",
+      "areas": ["A2", "A3", "B2", "B3", "E3", "G1", "G2", "H"],
+      "local_max": 4,
+      "global_max": 20,
+      "global_check_airfoils": 10,
+      "min_depth_trigger_in": 0.004,
+      "max_depth_in": 0.005,
+      "referenced_by": ["R-003d", "R-004-overflow"]
+    }
+  },
+  "evaluation_order": [
+    "Priority blocks (priority: true) are evaluated first within each rule_set",
+    "Merge/aggregation rules (merge_if_separation_below) execute before counting rules",
+    "Ignore rules (ignore_if_round_bottom_below) filter defects before limit checks",
+    "Local limits (local_max) are checked per airfoil",
+    "Global limits (global_max) are checked across the specified airfoil count",
+    "Shared count pools aggregate counts from rules referencing the same pool",
+    "Serviceability flags (sharp_bottom_serviceable, serviceable) determine final disposition"
+  ]
+}

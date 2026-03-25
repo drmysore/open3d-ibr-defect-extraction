@@ -1,0 +1,37 @@
+# IBR Defect Extraction — lightweight CI
+# Enables branch protection "required status checks" and optional auto-merge.
+# Maintainer: Supreeth Mysore
+
+name: CI
+
+on:
+  push:
+    branches: [master, inferno_j4, inferno_j3, inferno_v2]
+  pull_request:
+    branches: [master, inferno_j4]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Syntax check (compileall)
+        run: python -m compileall -q src web
+
+      - name: Import smoke test
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+        run: |
+          python -c "import pipeline_v2"
+          python -c "import web.app as wa; assert wa.app.title"

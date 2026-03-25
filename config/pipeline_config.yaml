@@ -41,19 +41,38 @@ measurement:
 
 zone_classification:
   zones:
-    - {id: "LE_TIP", name: "Leading Edge Tip", priority: 1, type: "edge_le", edge: "LE", severity: "CRITICAL", max_depth_in: 0.005, max_length_in: 0.030, span_start_pct: 90.0, span_end_pct: 100.0}
-    - {id: "TE_TIP", name: "Trailing Edge Tip", priority: 2, type: "edge_te", edge: "TE", severity: "CRITICAL", max_depth_in: 0.005, max_length_in: 0.030, span_start_pct: 90.0, span_end_pct: 100.0}
-    - {id: "A1", name: "LE Critical", priority: 3, type: "edge_le", edge: "LE", severity: "CRITICAL", max_depth_in: 0.003, max_length_in: 0.020, span_start_pct: 0.0, span_end_pct: 3.83}
-    - {id: "A2", name: "LE Mid", priority: 4, type: "edge_le", edge: "LE", severity: "HIGH", max_depth_in: 0.005, max_length_in: 0.040, span_start_pct: 3.83, span_end_pct: 62.88}
-    - {id: "A3", name: "LE Outer", priority: 5, type: "edge_le", edge: "LE", severity: "HIGH", max_depth_in: 0.008, max_length_in: 0.060, span_start_pct: 62.88, span_end_pct: 99.77}
-    - {id: "B1", name: "TE Critical", priority: 6, type: "edge_te", edge: "TE", severity: "CRITICAL", max_depth_in: 0.003, max_length_in: 0.020, span_start_pct: 0.0, span_end_pct: 3.83}
-    - {id: "B2", name: "TE Outer", priority: 7, type: "edge_te", edge: "TE", severity: "HIGH", max_depth_in: 0.006, max_length_in: 0.050, span_start_pct: 3.83, span_end_pct: 60.95}
-    - {id: "C1", name: "Convex Surface", priority: 8, type: "surface", severity: "STANDARD", max_depth_in: 0.010, max_length_in: 0.080}
-    - {id: "C2", name: "Concave Surface", priority: 9, type: "surface", severity: "STANDARD", max_depth_in: 0.010, max_length_in: 0.080}
-    - {id: "D1", name: "Platform LE", priority: 10, type: "surface", severity: "STANDARD", max_depth_in: 0.015, max_length_in: 0.100}
-    - {id: "D2", name: "Platform TE", priority: 11, type: "surface", severity: "STANDARD", max_depth_in: 0.015, max_length_in: 0.100}
-    - {id: "E1", name: "Root Fillet", priority: 12, type: "fillet", severity: "STANDARD", max_depth_in: 0.008, max_length_in: 0.060}
-    - {id: "E2", name: "Tip Region", priority: 13, type: "tip", severity: "STANDARD", max_depth_in: 0.010, max_length_in: 0.080}
+    # Leading Edge zones (A1-A3)
+    - {id: "A1", name: "Airfoil Leading Edge Inner Half", priority: 1, type: "edge_le", severity: "CRITICAL", span_start_pct: 0.0, span_end_pct: 50.0}
+    - {id: "A2", name: "Airfoil Leading Edge Mid", priority: 2, type: "edge_le", severity: "CRITICAL", span_start_pct: 20.0, span_end_pct: 80.0}
+    - {id: "A3", name: "Airfoil Leading Edge Outer", priority: 3, type: "edge_le", severity: "CRITICAL", span_start_pct: 70.0, span_end_pct: 100.0}
+    # Trailing Edge zones (B1-B3)
+    - {id: "B1", name: "Airfoil Trailing Edge Inner", priority: 4, type: "edge_te", severity: "CRITICAL", span_start_pct: 0.0, span_end_pct: 35.0}
+    - {id: "B2", name: "Airfoil Trailing Edge Mid", priority: 5, type: "edge_te", severity: "CRITICAL", span_start_pct: 25.0, span_end_pct: 75.0}
+    - {id: "B3", name: "Airfoil Trailing Edge Outer", priority: 6, type: "edge_te", severity: "CRITICAL", span_start_pct: 65.0, span_end_pct: 100.0}
+    # Convex Surface zones (C1-C4)
+    - {id: "C1", name: "Convex Surface Inner", priority: 7, type: "surface", severity: "STANDARD", max_depth_in: 0.005, max_length_in: 0.170}
+    - {id: "C2", name: "Convex Surface Mid-Inner", priority: 8, type: "surface", severity: "STANDARD", max_depth_in: 0.005, max_length_in: 0.170}
+    - {id: "C3", name: "Convex Surface Mid-Outer", priority: 9, type: "surface", severity: "STANDARD", max_depth_in: 0.005, max_length_in: 0.170}
+    - {id: "C4", name: "Convex Surface Outer", priority: 10, type: "surface", severity: "STANDARD", max_depth_in: 0.005, max_length_in: 0.170}
+    # Concave Surface zones (D1-D4)
+    - {id: "D1", name: "Concave Surface Inner", priority: 11, type: "surface", severity: "STANDARD", max_depth_in: 0.005, max_length_in: 0.170}
+    - {id: "D2", name: "Concave Surface Mid-Inner", priority: 12, type: "surface", severity: "STANDARD", max_depth_in: 0.005, max_length_in: 0.170}
+    - {id: "D3", name: "Concave Surface Mid-Outer", priority: 13, type: "surface", severity: "STANDARD", max_depth_in: 0.005, max_length_in: 0.170}
+    - {id: "D4", name: "Concave Surface Outer", priority: 14, type: "surface", severity: "STANDARD", max_depth_in: 0.005, max_length_in: 0.170}
+    # Fillet Radius zones (E1-E3)
+    - {id: "E1", name: "ID Fillet Radius", priority: 15, type: "fillet", severity: "HIGH", max_depth_in: 0.004}
+    - {id: "E2a", name: "ID Fillet Radius a", priority: 16, type: "fillet", severity: "HIGH", max_depth_in: 0.004}
+    - {id: "E2b", name: "ID Fillet Radius b", priority: 17, type: "fillet", severity: "HIGH", max_depth_in: 0.004}
+    - {id: "E2c", name: "ID Fillet Radius c", priority: 18, type: "fillet", severity: "HIGH", max_depth_in: 0.004}
+    - {id: "E2d", name: "ID Fillet Radius d", priority: 19, type: "fillet", severity: "HIGH", max_depth_in: 0.004}
+    - {id: "E3", name: "TE ID Fillet Radius", priority: 20, type: "fillet", severity: "HIGH", max_depth_in: 0.005}
+    # Tip Corner zones (G1-G2)
+    - {id: "G1", name: "LE Tip Corner", priority: 21, type: "tip_corner", severity: "CRITICAL", max_depth_in: 0.005}
+    - {id: "G2", name: "TE Tip Corner", priority: 22, type: "tip_corner", severity: "CRITICAL", max_depth_in: 0.025}
+    # Tip zone (H)
+    - {id: "H", name: "Airfoil Tip", priority: 23, type: "tip", severity: "CRITICAL", max_depth_in: 0.030}
+    # Platform zone (J)
+    - {id: "J", name: "Platform", priority: 24, type: "platform", severity: "STANDARD", max_depth_in: 0.005, max_length_in: 0.190}
   multi_zone_rule: "most_restrictive"
   edge_distance_threshold_inches: 0.080
 
@@ -61,7 +80,7 @@ output:
   format: "excel"
   include_json: true
   disposition_tiers: ["SERVICEABLE", "BLEND", "REPLACE"]
-  defect_types: ["nick", "dent", "crack", "FOD", "erosion", "scratch", "gouge"]
+  defect_types: ["nick", "dent", "scratch", "crack", "FOD", "erosion", "gouge", "curled_tip", "abradable_buildup", "out_of_plane_deformation"]
 
 performance:
   target_time_per_ibr_seconds: 90

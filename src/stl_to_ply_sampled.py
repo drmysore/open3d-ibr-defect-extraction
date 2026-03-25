@@ -8,6 +8,7 @@ Strategy for 156M-triangle (7.8 GB) file:
   5. Save via o3d_compat.write_point_cloud
 """
 
+import argparse
 import struct
 import os
 import sys
@@ -19,7 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "uti
 
 from o3d_compat import PointCloud, write_point_cloud
 
-STL_PATH = r"C:\Users\mssup\3dpoint\extracted\3DPC Data\models\20230626_77445-4119905_5th_Stage_IBR_Sprayed.stl"
+DEFAULT_STL_PATH = r"C:\Users\mssup\3dpoint\extracted\3DPC Data\models\20230626_77445-4119905_5th_Stage_IBR_Sprayed.stl"
 OUTPUT_SCAN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "real_scan_4119905.ply")
 OUTPUT_CAD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "real_cad_4119905.ply")
 
@@ -102,13 +103,27 @@ def voxel_deduplicate(vertices, normals, voxel_size):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Convert large STL to sampled PLY")
+    parser.add_argument("--stl-path", default=None, help="Absolute path to STL file")
+    parser.add_argument("--voxel-mm", type=float, default=0.5, help="Voxel dedup size in mm")
+    args = parser.parse_args()
+
+    stl_path = args.stl_path or os.environ.get("REAL_STL_PATH") or DEFAULT_STL_PATH
+    voxel_size_m = float(args.voxel_mm) / 1000.0
+
+    if not os.path.isfile(stl_path):
+        print("ERROR: STL file not found.")
+        print(f"  Resolved path: {stl_path}")
+        print("  Provide --stl-path or set REAL_STL_PATH environment variable.")
+        sys.exit(1)
+
     print("=" * 60)
     print("  STL -> PLY CONVERTER (Sampled + Voxel Dedup)")
-    print(f"  Input:  {STL_PATH}")
-    print(f"  Voxel:  {VOXEL_SIZE * 1000:.1f} mm")
+    print(f"  Input:  {stl_path}")
+    print(f"  Voxel:  {voxel_size_m * 1000:.1f} mm")
     print("=" * 60)
 
-    tri_count = read_triangle_count(STL_PATH)
+    tri_count = read_triangle_count(stl_path)
     print(f"\n  Triangle count: {tri_count:,}")
 
     # Compute sampling rate: target ~700K vertices before dedup -> ~500K after
@@ -121,12 +136,12 @@ def main():
 
     t_total = time.time()
 
-    vertices, normals = sample_triangles_chunked(STL_PATH, tri_count, sample_every)
+    vertices, normals = sample_triangles_chunked(stl_path, tri_count, sample_every)
     print(f"  Raw sampled vertices: {len(vertices):,}")
 
-    print(f"\n  Voxel deduplication ({VOXEL_SIZE * 1000:.1f} mm grid)...")
+    print(f"\n  Voxel deduplication ({voxel_size_m * 1000:.1f} mm grid)...")
     t0 = time.time()
-    unique_pts, unique_norms = voxel_deduplicate(vertices, normals, VOXEL_SIZE)
+    unique_pts, unique_norms = voxel_deduplicate(vertices, normals, voxel_size_m)
     print(f"  Unique points: {len(unique_pts):,}  ({time.time() - t0:.1f}s)")
 
     # Normalize normals
