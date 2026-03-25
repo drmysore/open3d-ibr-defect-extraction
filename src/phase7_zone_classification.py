@@ -87,9 +87,11 @@ class ZoneClassification:
     ) -> list[str]:
         matched = []
         for zid, zone in self.zones.items():
-            if zone.get("type") != zone_type:
-                continue
-            if zone.get("edge") != edge:
+            ztype = zone.get("type", "")
+            zedge = zone.get("edge")
+            if ztype == zone_type or (zedge == edge and "edge" in ztype):
+                pass
+            else:
                 continue
             span_start = zone.get("span_start_pct", 0.0)
             span_end = zone.get("span_end_pct", 100.0)
@@ -119,7 +121,7 @@ class ZoneClassification:
     def _match_tip_zones(self, height_pct: float) -> list[str]:
         matched = []
         for zid, zone in self.zones.items():
-            if zone.get("type") not in ("tip",):
+            if zone.get("type") not in ("tip", "tip_corner"):
                 continue
             span_start = zone.get("span_start_pct", 0.0)
             span_end = zone.get("span_end_pct", 100.0)
@@ -154,8 +156,8 @@ class ZoneClassification:
             return None
         return {
             "zone_id": zone_id,
-            "max_depth_in": zone["max_depth_in"],
-            "max_length_in": zone["max_length_in"],
+            "max_depth_in": zone.get("max_depth_in", float("inf")),
+            "max_length_in": zone.get("max_length_in", float("inf")),
             "severity": zone.get("severity", "STANDARD"),
         }
 
