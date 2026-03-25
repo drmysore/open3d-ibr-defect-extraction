@@ -1,0 +1,29 @@
+{
+  "jobs": [
+    {
+      "stage_id": 3,
+      "part_number": "4134613",
+      "scan_path": "data/sample_scan.ply",
+      "cad_path": "data/cad_reference.ply"
+    },
+    {
+      "stage_id": 5,
+      "part_number": "4119905",
+      "scan_path": "data/real_scan_4119905.ply",
+      "cad_path": "data/real_cad_4119905.ply"
+    },
+    {
+      "stage_id": 5,
+      "part_number": "4119905",
+      "fin_id": "FIN-001",
+      "scan_path": "data/real_scan_4119905.ply",
+      "cad_path": "data/real_cad_4119905.ply"
+    },
+    {
+      "stage_id": 4,
+      "part_number": "4119904",
+      "scan_path": "data/sample_scan.ply",
+      "cad_path": "data/cad_reference.ply"
+    }
+  ]
+}

@@ -291,6 +291,121 @@ async def api_pipeline_status():
     return pipeline_status
 
 
+# ----- Batch Pipeline Endpoints -----
+
+@app.get("/batch-jobs", response_class=HTMLResponse)
+async def batch_jobs_page(request: Request):
+    """Batch job monitoring and submission UI."""
+    return templates.TemplateResponse("batch_jobs.html", {"request": request})
+
+
+def _get_batch_manager():
+    from batch_manager import get_manager
+    return get_manager()
+
+
+@app.post("/api/pipeline/batch")
+async def api_batch_submit(request: Request):
+    """Submit one or more pipeline jobs.
+    Body: {"jobs": [{"stage_id": 3, "part_number": "4134613", "scan_path": "...", "cad_path": "..."}]}
+    """
+    body = await request.json()
+    mgr = _get_batch_manager()
+    jobs_input = body.get("jobs", [])
+    if not jobs_input:
+        raise HTTPException(400, "No jobs provided. Send {\"jobs\": [...]}")
+    submitted = mgr.submit_batch(jobs_input)
+    return {
+        "submitted": len(submitted),
+        "jobs": [
+            {"job_id": j.job_id, "part": j.part_id.job_key, "status": j.status.value}
+            for j in submitted
+        ],
+    }
+
+
+@app.get("/api/pipeline/jobs")
+async def api_list_jobs():
+    """Return all batch jobs with current status."""
+    mgr = _get_batch_manager()
+    jobs = mgr.get_all_jobs()
+    summary = mgr.get_batch_summary()
+    return {
+        "summary": summary,
+        "jobs": [
+            {
+                "job_id": j.job_id,
+                "stage_id": j.part_id.stage_id,
+                "part_number": j.part_id.part_number,
+                "fin_id": j.part_id.fin_id,
+                "job_key": j.part_id.job_key,
+                "status": j.status.value,
+                "progress": j.progress,
+                "created_at": j.created_at.isoformat() if j.created_at else None,
+                "started_at": j.started_at.isoformat() if j.started_at else None,
+                "completed_at": j.completed_at.isoformat() if j.completed_at else None,
+                "duration_s": j.duration_s,
+                "error": j.error,
+                "scan_path": j.scan_path,
+                "cad_path": j.cad_path,
+            }
+            for j in jobs
+        ],
+    }
+
+
+@app.get("/api/pipeline/jobs/{job_id}")
+async def api_get_job(job_id: str):
+    """Return a single job's status and details."""
+    mgr = _get_batch_manager()
+    j = mgr.get_job(job_id)
+    if not j:
+        raise HTTPException(404, f"Job not found: {job_id}")
+    return {
+        "job_id": j.job_id,
+        "stage_id": j.part_id.stage_id,
+        "part_number": j.part_id.part_number,
+        "fin_id": j.part_id.fin_id,
+        "job_key": j.part_id.job_key,
+        "status": j.status.value,
+        "progress": j.progress,
+        "created_at": j.created_at.isoformat() if j.created_at else None,
+        "started_at": j.started_at.isoformat() if j.started_at else None,
+        "completed_at": j.completed_at.isoformat() if j.completed_at else None,
+        "duration_s": j.duration_s,
+        "error": j.error,
+        "result_summary": {
+            "total_defects": j.result.get("total_defects"),
+            "overall_disposition": j.result.get("overall_disposition"),
+        } if j.result else None,
+    }
+
+
+@app.post("/api/pipeline/jobs/{job_id}/cancel")
+async def api_cancel_job(job_id: str):
+    mgr = _get_batch_manager()
+    ok = mgr.cancel_job(job_id)
+    if not ok:
+        raise HTTPException(400, "Job cannot be cancelled (not queued)")
+    return {"status": "cancelled", "job_id": job_id}
+
+
+@app.post("/api/pipeline/jobs/{job_id}/retry")
+async def api_retry_job(job_id: str):
+    mgr = _get_batch_manager()
+    j = mgr.retry_job(job_id)
+    if not j:
+        raise HTTPException(400, "Job cannot be retried (not failed)")
+    return {"status": "requeued", "job_id": j.job_id}
+
+
+@app.delete("/api/pipeline/jobs/completed")
+async def api_clear_completed():
+    mgr = _get_batch_manager()
+    mgr.clear_completed()
+    return {"status": "cleared"}
+
+
 @app.get("/api/sprint4/report")
 async def api_sprint4_report():
     """Return the latest Sprint 4 analysis JSON."""
