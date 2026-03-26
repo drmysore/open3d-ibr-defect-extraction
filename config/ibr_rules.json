@@ -2,6 +2,12 @@
   "version": "2.0.0",
   "program": "F135",
   "description": "Hierarchical IBR defect disposition rules from P&W inspection manual",
+  "source_document": "DMC-PWF135-AAA-72-31-0050-020AA-310A-D",
+  "part_number": "4119905",
+  "stage": 5,
+  "inspection_type": "Visual examination",
+  "issue_date": "2025-04-04",
+  "issue_number": "013",
   "areas": {
     "A1": {
       "name": "Airfoil Leading Edge (inner half)",
@@ -130,6 +136,10 @@
     {
       "rule_set_id": "RS-001",
       "title": "A2 Leading Edge Scratches",
+      "s1000d_item": 13,
+      "s1000d_text": "Four maximum scratches for each airfoil, 20 maximum scratches combined across 10 airfoils, scratches cannot cross, 0.002 inch maximum depth, 0.170 inch maximum length GROUP OR 0.001 inch maximum depth. For scratches more than 0.001 inch depth that are separated by less than 0.015 inch length, those scratches must be considered as single scratch by adding their lengths.",
+      "repairable": false,
+      "repair_note": "Not repairable per S1000D source. Corrective action: Replace 5th stage rotor.",
       "primary_area": "A2",
       "edge": "LE",
       "defect_types": ["scratch"],
@@ -579,6 +589,8 @@
     {
       "rule_set_id": "RS-007",
       "title": "A2 LE Nicks/Dents (Rule 7)",
+      "s1000d_item": 12,
+      "s1000d_text": "Two maximum combined between AREA A2, and AREA A3, 0.015 inch maximum depth in chordwise direction for damage contacting leading edge (extending into both concave and convex sides). Minimum 0.250 inch separation. GROUP OR eight maximum, 0.010 inch maximum depth in chordwise direction for damage contacting leading edge (extending into both concave and convex sides). Minimum separation must be more than depth of deepest flaw present. Nicks and dents 0.002 inch round bottom and below must not be counted in overall defect count and separation limit does not apply as long as defects are visually separated. GROUP OR four maximum nicks and dents for each airfoil combined across AREA A2, AREA A3, AREA B2, AREA B3, AREA G1, AREA G2, and AREA H. Include AREA E3 only for nicks and dents reported on those areas that are more than 0.004 inch up to 0.005 inch, 20 maximum surface nicks and dents combined across 10 airfoils, 0.005 inch maximum depth round bottom. Sharp bottom nicks are not serviceable. Minimum separation must be more than depth of deepest flaw present. Nicks and dents 0.002 inch round bottom and below must not be counted in overall defect count and separation limit does not apply as long as defects are visually separated.",
       "primary_area": "A2",
       "edge": "LE",
       "defect_types": ["nick", "dent"],
@@ -1189,6 +1201,51 @@
           ]
         }
       ]
+    },
+    {
+      "rule_set_id": "RS-018",
+      "title": "A2 LE Nicks/Dents Repairable Depth Limit",
+      "s1000d_item": 12,
+      "s1000d_column": "Maximum Repairable Limit",
+      "s1000d_text": "0.080 inch maximum depth",
+      "s1000d_corrective_action": "Blend 5th stage rotor. Refer to DMC-PWF135-AAA-72-31-0050-020AA-649B-H (Blend Airfoil).",
+      "primary_area": "A2",
+      "edge": "LE",
+      "defect_types": ["nick", "dent"],
+      "rule_blocks": [
+        {
+          "block_id": "18",
+          "priority": false,
+          "description": "Maximum repairable depth for A2 LE nicks/dents. Defects exceeding serviceable limits but within 0.080 in depth may be blended per repair procedure.",
+          "rules": [
+            {
+              "rule_id": "R-018",
+              "description": "Max repairable depth 0.080 in for A2 LE nicks/dents. Defects exceeding serviceable limits up to this depth are candidates for blend repair.",
+              "areas": ["A2"],
+              "edge": "LE",
+              "defect_types": ["nick", "dent"],
+              "local_max": null,
+              "global_max": null,
+              "global_check_airfoils": null,
+              "max_depth_in": 0.080,
+              "max_length_in": null,
+              "max_width_in": null,
+              "min_separation_in": null,
+              "direction": null,
+              "concave_to_convex": false,
+              "cannot_cross": false,
+              "sharp_bottom_serviceable": true,
+              "ignore_if_round_bottom_below": null,
+              "merge_if_separation_below": null,
+              "serviceable": false,
+              "repairable": true,
+              "repair_procedure": "Blend (Airfoil)",
+              "repair_dmref": "DMC-PWF135-AAA-72-31-0050-020AA-649B-H",
+              "notes": "S1000D repairable limit. Defects within 0.080 in depth may be blended. Beyond 0.080 in, part is not repairable — corrective action is replacement."
+            }
+          ]
+        }
+      ]
     }
   ],
   "shared_count_pools": {
@@ -1228,6 +1285,8 @@
     "Local limits (local_max) are checked per airfoil",
     "Global limits (global_max) are checked across the specified airfoil count",
     "Shared count pools aggregate counts from rules referencing the same pool",
-    "Serviceability flags (sharp_bottom_serviceable, serviceable) determine final disposition"
+    "Serviceability flags (sharp_bottom_serviceable, serviceable) determine final disposition",
+    "Repairable limits (repairable: true) are evaluated for defects exceeding serviceable limits",
+    "Defects exceeding repairable limits trigger corrective action (replacement)"
   ]
 }
