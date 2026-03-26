@@ -1,0 +1,75 @@
+{
+  "version": "2.0.0",
+  "program": "F135",
+  "description": "Repairable limits extracted from P&W S1000D visual examination procedure",
+  "source_document": "DMC-PWF135-AAA-72-31-0050-020AA-310A-D",
+  "part_number": "4119905",
+  "stage": 5,
+  "inspection_type": "Visual examination",
+  "issue_date": "2025-04-04",
+  "issue_number": "013",
+  "repairable_limits": [
+    {
+      "limit_id": "RL-001",
+      "title": "A2 LE Nicks/Dents Repairable Depth Limit",
+      "s1000d_item": 12,
+      "inspection_area": "12. AIRFOIL LEADING EDGE (AREA A2)",
+      "defect_types": ["nick", "dent"],
+      "areas": ["A2"],
+      "edge": "LE",
+      "max_depth_in": 0.080,
+      "s1000d_text": "0.080 inch maximum depth",
+      "corrective_action": "Blend",
+      "corrective_action_detail": "Blend 5th stage rotor",
+      "repair_procedure_ref": "DMC-PWF135-AAA-72-31-0050-020AA-649B-H",
+      "repair_procedure_title": "5th Stage Axial Compressor Rotor - Blend (Airfoil)",
+      "serviceable_rule_set_ref": "RS-007",
+      "ibr_rule_ref": "RS-018",
+      "notes": "Defects exceeding serviceable limits (RS-007) but within 0.080 in depth may be repaired by blending. Defects exceeding 0.080 in depth require part replacement."
+    },
+    {
+      "limit_id": "RL-002",
+      "title": "A2 LE Scratches — Not Repairable",
+      "s1000d_item": 13,
+      "inspection_area": "13. AIRFOIL LEADING EDGE (AREA A2)",
+      "defect_types": ["scratch"],
+      "areas": ["A2"],
+      "edge": "LE",
+      "repairable": false,
+      "s1000d_text": "Not repairable",
+      "corrective_action": "Replace",
+      "corrective_action_detail": "Replace 5th stage rotor",
+      "replace_procedure_refs": [
+        "DMC-PWF135-AAA-72-31-0050-000AA-530A-D",
+        "DMC-PWF135-AAA-72-31-0050-000AA-710A-D"
+      ],
+      "replace_procedure_titles": [
+        "Compressor Rotor Assembly - Disassemble procedure",
+        "Compressor Rotor Assembly - Assemble procedure"
+      ],
+      "serviceable_rule_set_ref": "RS-001",
+      "notes": "Scratches exceeding serviceable limits are not repairable. Corrective action is replacement of the 5th stage rotor."
+    },
+    {
+      "limit_id": "RL-003",
+      "title": "A1/B1 Inner Half Out-of-Plane Deformation",
+      "inspection_area": "Inner half LE and TE (AREA A1, AREA B1)",
+      "defect_types": ["out_of_plane_deformation"],
+      "areas": ["A1", "B1"],
+      "edge": null,
+      "repairable": true,
+      "max_depth_in": null,
+      "corrective_action": "Repair within area limits",
+      "serviceable_rule_set_ref": "RS-017",
+      "ibr_rule_ref": "RS-017",
+      "notes": "Out-of-plane deformation on inner half LE/TE is NOT serviceable as-is but may be repaired if resulting geometry falls within established area limits for A1/B1."
+    }
+  ],
+  "disposition_flow": [
+    "1. Evaluate defect against serviceable limits (ibr_rules.json rule_sets)",
+    "2. If within serviceable limits → SERVICEABLE (no action required)",
+    "3. If exceeding serviceable limits → check repairable limits",
+    "4. If within repairable limits → REPAIRABLE (execute corrective action: Blend)",
+    "5. If exceeding repairable limits OR not repairable → REPLACE (execute replacement procedure)"
+  ]
+}
