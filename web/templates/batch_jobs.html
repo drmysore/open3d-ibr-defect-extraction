@@ -315,8 +315,8 @@
       sel.innerHTML = '<option value="">Select a stage…</option>';
       (Array.isArray(rotorConfigs) ? rotorConfigs : []).forEach(cfg => {
         const opt = document.createElement('option');
-        opt.value = cfg.stage_id ?? cfg.id ?? '';
-        opt.textContent = 'Stage ' + (cfg.stage_id ?? cfg.id ?? '?') + ' — ' + (cfg.part_number || cfg.name || 'Unknown');
+        opt.value = cfg.stage_id ?? cfg.stage ?? cfg.id ?? '';
+        opt.textContent = 'Stage ' + (cfg.stage_id ?? cfg.stage ?? cfg.id ?? '?') + ' — ' + (cfg.part_number || cfg.name || 'Unknown');
         opt.dataset.part = cfg.part_number || cfg.name || '';
         sel.appendChild(opt);
       });
@@ -335,15 +335,15 @@
     const stageId = document.getElementById('stage-select').value;
     if (!stageId) { showError('Please select a stage.'); return; }
     const payload = {
-      stage_id: stageId,
+      stage_id: parseInt(stageId, 10) || stageId,
       part_number: document.getElementById('part-number').value,
       fin_id: document.getElementById('fin-id').value || null,
-      scan_ply: document.getElementById('scan-path').value,
-      cad_ply: document.getElementById('cad-path').value
+      scan_path: document.getElementById('scan-path').value,
+      cad_path: document.getElementById('cad-path').value
     };
     try {
       showLoading('Submitting job…');
-      const res = await fetch('/api/pipeline/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch('/api/pipeline/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({jobs: [payload]}) });
       if (!res.ok) throw new Error('Submit failed');
       hideLoading();
       loadJobs();
@@ -356,15 +356,15 @@
   window.submitAllStages = async function() {
     if (!rotorConfigs.length) { showError('No rotor configs loaded.'); return; }
     const jobs = rotorConfigs.map(cfg => ({
-      stage_id: cfg.stage_id ?? cfg.id,
+      stage_id: cfg.stage_id ?? cfg.stage ?? cfg.id,
       part_number: cfg.part_number || cfg.name || '',
       fin_id: document.getElementById('fin-id').value || null,
-      scan_ply: document.getElementById('scan-path').value,
-      cad_ply: document.getElementById('cad-path').value
+      scan_path: document.getElementById('scan-path').value,
+      cad_path: document.getElementById('cad-path').value
     }));
     try {
       showLoading('Submitting ' + jobs.length + ' jobs…');
-      const res = await fetch('/api/pipeline/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jobs) });
+      const res = await fetch('/api/pipeline/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({jobs: jobs}) });
       if (!res.ok) throw new Error('Batch submit failed');
       hideLoading();
       loadJobs();

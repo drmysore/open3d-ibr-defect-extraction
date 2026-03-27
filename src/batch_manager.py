@@ -250,15 +250,19 @@ class BatchJobManager:
         """
         submitted: List[BatchJob] = []
         for entry in jobs_list:
+            stage = entry.get("stage_id") or entry.get("stage") or entry.get("id") or 0
+            part = entry.get("part_number") or entry.get("part") or "unknown"
+            scan = entry.get("scan_path") or entry.get("scan_ply") or "data/sample_scan.ply"
+            cad = entry.get("cad_path") or entry.get("cad_ply") or "data/cad_reference.ply"
             part_id = CompoundPartID(
-                stage_id=entry["stage_id"],
-                part_number=entry["part_number"],
+                stage_id=int(stage) if str(stage).isdigit() else stage,
+                part_number=str(part),
                 fin_id=entry.get("fin_id"),
             )
             job = self.submit_job(
                 part_id=part_id,
-                scan_path=entry["scan_path"],
-                cad_path=entry["cad_path"],
+                scan_path=str(scan),
+                cad_path=str(cad),
                 config_path=entry.get("config_path"),
                 pipeline_version=entry.get("pipeline_version", "v2"),
             )
