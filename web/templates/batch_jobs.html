@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batch Jobs — IBR Defect Extraction</title>
+<style>
+  :root {
+    --bg: #0a0e17; --surface: #131a2b; --surface2: #1a2338;
+    --border: #2a3654; --text: #e2e8f0; --text-muted: #8892a4;
+    --accent: #3b82f6; --green: #22c55e; --amber: #f59e0b; --red: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 32px; display: flex; align-items: center; gap: 24px; }
+  .topbar h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; } .topbar h1 span { color: var(--accent); }
+  .topbar nav { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+  .topbar nav a { color: var(--text-muted); font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 6px; transition: all .15s; }
+  .topbar nav a:hover, .topbar nav a.active { color: var(--text); background: var(--surface2); text-decoration: none; }
+
+  .container { max-width: 1500px; margin: 0 auto; padding: 24px 32px; }
+
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-header-left h2 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .page-header-left p { color: var(--text-muted); font-size: 13px; }
+  .page-header-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn { padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; transition: all .15s; font-family: inherit; }
+  .btn-primary { background: var(--accent); color: white; } .btn-primary:hover { background: #2563eb; }
+  .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-outline:hover { color: var(--text); border-color: var(--text-muted); }
+  .btn-danger { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.25); }
+  .btn-danger:hover { background: rgba(239,68,68,.25); }
+  .btn-success { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+  .btn-success:hover { background: rgba(34,197,94,.25); }
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .submit-panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 24px; overflow: hidden;
+  }
+  .submit-toggle {
+    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none; transition: background .15s;
+  }
+  .submit-toggle:hover { background: var(--surface2); }
+  .submit-toggle h3 { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .submit-toggle .chevron { font-size: 10px; color: var(--text-muted); transition: transform .2s; }
+  .submit-toggle .chevron.open { transform: rotate(90deg); }
+  .submit-body { display: none; padding: 0 20px 20px; }
+  .submit-body.open { display: block; }
+  .submit-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px;
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-muted); font-weight: 700; margin-bottom: 6px;
+  }
+  .form-group input, .form-group select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: inherit;
+    transition: border-color .15s;
+  }
+  .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+  .form-group input::placeholder { color: var(--text-muted); }
+  .submit-actions { display: flex; gap: 10px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-pill {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 20px; position: relative; overflow: hidden;
+  }
+  .stat-pill::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .stat-pill.blue::before { background: var(--accent); }
+  .stat-pill.gray::before { background: var(--text-muted); }
+  .stat-pill.amber::before { background: var(--amber); }
+  .stat-pill.green::before { background: var(--green); }
+  .stat-pill.red::before { background: var(--red); }
+  .stat-pill .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; font-weight: 700; }
+  .stat-pill .value { font-size: 28px; font-weight: 700; line-height: 1.1; }
+  .stat-pill.blue .value { color: var(--accent); }
+  .stat-pill.gray .value { color: var(--text-muted); }
+  .stat-pill.amber .value { color: var(--amber); }
+  .stat-pill.green .value { color: var(--green); }
+  .stat-pill.red .value { color: var(--red); }
+
+  .jobs-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+
+  .job-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; position: relative; overflow: hidden;
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+    animation: cardFadeIn .35s ease-out;
+  }
+  .job-card:hover { border-color: rgba(59,130,246,.35); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+
+  @keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .job-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
+  .job-id { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .job-part { font-size: 14px; font-weight: 700; }
+  .job-fin { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+  .badge-queued { background: rgba(136,146,164,.15); color: var(--text-muted); }
+  .badge-running { background: rgba(245,158,11,.15); color: var(--amber); }
+  .badge-complete { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge-failed { background: rgba(239,68,68,.15); color: var(--red); }
+  .badge-cancelled { background: rgba(136,146,164,.1); color: #5a6478; }
+
+  .pulse-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--amber);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .4; transform: scale(.7); }
+  }
+
+  .progress-wrap { margin: 12px 0 8px; }
+  .progress-bar-bg {
+    width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 3px; transition: width .4s ease;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--amber),
+      var(--amber) 8px,
+      rgba(245,158,11,.6) 8px,
+      rgba(245,158,11,.6) 16px
+    );
+    background-size: 22.6px 100%;
+    animation: stripes .8s linear infinite;
+  }
+  @keyframes stripes { to { background-position: 22.6px 0; } }
+  .progress-text { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+  .job-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(42,54,84,.4); }
+  .job-duration { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+  .job-actions { display: flex; gap: 6px; }
+
+  .empty-state { text-align: center; padding: 80px 20px; }
+  .empty-state h3 { font-size: 20px; margin-bottom: 8px; }
+  .empty-state p { color: var(--text-muted); font-size: 14px; }
+
+  .error-banner { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); border-radius: 8px; padding: 14px 20px; color: var(--red); font-size: 13px; margin-bottom: 20px; display: none; }
+
+  #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,14,23,.9); display: none; align-items: center; justify-content: center; z-index: 1000; flex-direction: column; gap: 16px; }
+  #loading-overlay.show { display: flex; }
+  .spinner { width: 44px; height: 44px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading-text { color: var(--text-muted); font-size: 13px; }
+
+  @media (max-width: 1100px) { .stats-row { grid-template-columns: repeat(3, 1fr); } .jobs-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
+  @media (max-width: 768px) { .stats-row { grid-template-columns: 1fr 1fr; } .jobs-grid { grid-template-columns: 1fr; } .container { padding: 16px; } .topbar { padding: 12px 16px; } .submit-grid { grid-template-columns: 1fr; } .page-header { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span>IBR</span> Defect Extraction System</h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/viewer3d">3D Viewer</a>
+    <a href="/reports">Reports</a>
+    <a href="/phase-viewer">Phase Viewer</a>
+    <a href="/inferno-viewer">Inferno 3D</a>
+    <a href="/comparison">Compare</a>
+    <a href="/gallery">Gallery</a>
+    <a href="/maintenance">Maintenance</a>
+    <a href="/quality-audits">Audits</a>
+    <a href="/batch-jobs" class="active">Batch</a>
+  </nav>
+</div>
+
+<div class="container">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>Batch Pipeline Jobs</h2>
+      <p>Submit and monitor IBR inspection pipeline jobs</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-danger btn-sm" onclick="clearCompleted()" id="btn-clear">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        Clear Completed
+      </button>
+    </div>
+  </div>
+
+  <div class="error-banner" id="error-banner"></div>
+
+  <!-- Submit New Job Panel -->
+  <div class="submit-panel">
+    <div class="submit-toggle" onclick="toggleSubmitPanel()">
+      <h3>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Submit New Job
+      </h3>
+      <span class="chevron" id="submit-chevron">&#9654;</span>
+    </div>
+    <div class="submit-body" id="submit-body">
+      <div class="submit-grid">
+        <div class="form-group">
+          <label>Stage ID</label>
+          <select id="stage-select" onchange="onStageSelect()">
+            <option value="">Select a stage…</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Part Number</label>
+          <input type="text" id="part-number" placeholder="Auto-fills from stage" readonly>
+        </div>
+        <div class="form-group">
+          <label>Fin ID <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+          <input type="text" id="fin-id" placeholder="e.g. FIN-003">
+        </div>
+        <div class="form-group">
+          <label>Scan PLY Path</label>
+          <input type="text" id="scan-path" value="data/sample_scan.ply">
+        </div>
+        <div class="form-group">
+          <label>CAD PLY Path</label>
+          <input type="text" id="cad-path" value="data/cad_reference.ply">
+        </div>
+      </div>
+      <div class="submit-actions">
+        <button class="btn btn-primary" onclick="submitJob()">Submit Job</button>
+        <button class="btn btn-outline" onclick="submitAllStages()">Submit All Stages</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Summary -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-pill blue">
+      <div class="label">Total Jobs</div>
+      <div class="value" id="stat-total">0</div>
+    </div>
+    <div class="stat-pill gray">
+      <div class="label">Queued</div>
+      <div class="value" id="stat-queued">0</div>
+    </div>
+    <div class="stat-pill amber">
+      <div class="label">Running</div>
+      <div class="value" id="stat-running">0</div>
+    </div>
+    <div class="stat-pill green">
+      <div class="label">Complete</div>
+      <div class="value" id="stat-complete">0</div>
+    </div>
+    <div class="stat-pill red">
+      <div class="label">Failed</div>
+      <div class="value" id="stat-failed">0</div>
+    </div>
+  </div>
+
+  <!-- Job Cards -->
+  <div id="jobs-container"></div>
+
+</div>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div id="loading-text">Loading jobs…</div>
+</div>
+
+<script>
+(function() {
+  let rotorConfigs = [];
+  let pollTimer = null;
+  const POLL_INTERVAL = 3000;
+
+  const STATUS_ORDER = { RUNNING: 0, QUEUED: 1, COMPLETE: 2, FAILED: 3, CANCELLED: 4 };
+
+  window.toggleSubmitPanel = function() {
+    const body = document.getElementById('submit-body');
+    const chev = document.getElementById('submit-chevron');
+    body.classList.toggle('open');
+    chev.classList.toggle('open');
+  };
+
+  function showError(msg) {
+    const el = document.getElementById('error-banner');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 8000);
+  }
+
+  function showLoading(msg) {
+    document.getElementById('loading-text').textContent = msg || 'Loading…';
+    document.getElementById('loading-overlay').classList.add('show');
+  }
+  function hideLoading() {
+    document.getElementById('loading-overlay').classList.remove('show');
+  }
+
+  async function loadRotorConfigs() {
+    try {
+      const res = await fetch('/api/rotor-configs');
+      if (!res.ok) throw new Error('Failed to load rotor configs');
+      rotorConfigs = await res.json();
+      const sel = document.getElementById('stage-select');
+      sel.innerHTML = '<option value="">Select a stage…</option>';
+      (Array.isArray(rotorConfigs) ? rotorConfigs : []).forEach(cfg => {
+        const opt = document.createElement('option');
+        opt.value = cfg.stage_id ?? cfg.stage ?? cfg.id ?? '';
+        opt.textContent = 'Stage ' + (cfg.stage_id ?? cfg.stage ?? cfg.id ?? '?') + ' — ' + (cfg.part_number || cfg.name || 'Unknown');
+        opt.dataset.part = cfg.part_number || cfg.name || '';
+        sel.appendChild(opt);
+      });
+    } catch (e) {
+      console.warn('Could not load rotor configs:', e);
+    }
+  }
+
+  window.onStageSelect = function() {
+    const sel = document.getElementById('stage-select');
+    const opt = sel.selectedOptions[0];
+    document.getElementById('part-number').value = opt?.dataset?.part || '';
+  };
+
+  window.submitJob = async function() {
+    const stageId = document.getElementById('stage-select').value;
+    if (!stageId) { showError('Please select a stage.'); return; }
+    const payload = {
+      stage_id: parseInt(stageId, 10) || stageId,
+      part_number: document.getElementById('part-number').value,
+      fin_id: document.getElementById('fin-id').value || null,
+      scan_path: document.getElementById('scan-path').value,
+      cad_path: document.getElementById('cad-path').value
+    };
+    try {
+      showLoading('Submitting job…');
+      const res = await fetch('/api/pipeline/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({jobs: [payload]}) });
+      if (!res.ok) throw new Error('Submit failed');
+      hideLoading();
+      loadJobs();
+    } catch (e) {
+      hideLoading();
+      showError('Failed to submit job: ' + e.message);
+    }
+  };
+
+  window.submitAllStages = async function() {
+    if (!rotorConfigs.length) { showError('No rotor configs loaded.'); return; }
+    const jobs = rotorConfigs.map(cfg => ({
+      stage_id: cfg.stage_id ?? cfg.stage ?? cfg.id,
+      part_number: cfg.part_number || cfg.name || '',
+      fin_id: document.getElementById('fin-id').value || null,
+      scan_path: document.getElementById('scan-path').value,
+      cad_path: document.getElementById('cad-path').value
+    }));
+    try {
+      showLoading('Submitting ' + jobs.length + ' jobs…');
+      const res = await fetch('/api/pipeline/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({jobs: jobs}) });
+      if (!res.ok) throw new Error('Batch submit failed');
+      hideLoading();
+      loadJobs();
+    } catch (e) {
+      hideLoading();
+      showError('Failed to submit batch: ' + e.message);
+    }
+  };
+
+  async function loadJobs() {
+    try {
+      const res = await fetch('/api/pipeline/jobs');
+      if (!res.ok) throw new Error('Failed to load jobs');
+      const jobs = await res.json();
+      renderSummary(jobs);
+      renderJobCards(jobs);
+      managePoll(jobs);
+    } catch (e) {
+      console.warn('Could not load jobs:', e);
+      renderEmpty();
+    }
+  }
+
+  function renderSummary(jobs) {
+    const arr = Array.isArray(jobs) ? jobs : [];
+    const counts = { total: arr.length, QUEUED: 0, RUNNING: 0, COMPLETE: 0, FAILED: 0 };
+    arr.forEach(j => { const s = (j.status || '').toUpperCase(); if (s in counts) counts[s]++; });
+    document.getElementById('stat-total').textContent = counts.total;
+    document.getElementById('stat-queued').textContent = counts.QUEUED;
+    document.getElementById('stat-running').textContent = counts.RUNNING;
+    document.getElementById('stat-complete').textContent = counts.COMPLETE;
+    document.getElementById('stat-failed').textContent = counts.FAILED;
+  }
+
+  function formatDuration(ms) {
+    if (!ms || ms < 0) return '—';
+    const secs = Math.floor(ms / 1000);
+    if (secs < 60) return secs + 's';
+    const mins = Math.floor(secs / 60);
+    const rem = secs % 60;
+    if (mins < 60) return mins + 'm ' + rem + 's';
+    const hrs = Math.floor(mins / 60);
+    return hrs + 'h ' + (mins % 60) + 'm';
+  }
+
+  function getElapsed(job) {
+    if (job.duration_ms != null) return job.duration_ms;
+    if (job.started_at) {
+      const start = new Date(job.started_at).getTime();
+      const end = job.completed_at ? new Date(job.completed_at).getTime() : Date.now();
+      return end - start;
+    }
+    return null;
+  }
+
+  function truncateId(id) {
+    if (!id) return '—';
+    const s = String(id);
+    return s.length > 12 ? s.slice(0, 8) + '…' : s;
+  }
+
+  function renderJobCards(jobs) {
+    const arr = Array.isArray(jobs) ? jobs : [];
+    const container = document.getElementById('jobs-container');
+
+    if (!arr.length) { renderEmpty(); return; }
+
+    const sorted = [...arr].sort((a, b) => {
+      const sa = STATUS_ORDER[(a.status || '').toUpperCase()] ?? 99;
+      const sb = STATUS_ORDER[(b.status || '').toUpperCase()] ?? 99;
+      return sa - sb;
+    });
+
+    let html = '<div class="jobs-grid">';
+    sorted.forEach(job => {
+      const status = (job.status || 'QUEUED').toUpperCase();
+      const badgeClass = 'badge-' + status.toLowerCase();
+      const stageLabel = job.stage_id != null ? 'Stage ' + job.stage_id : '';
+      const partLabel = job.part_number ? ' — ' + job.part_number : '';
+      const elapsed = getElapsed(job);
+      const progress = job.progress ?? 0;
+      const totalPhases = job.total_phases ?? 8;
+      const currentPhase = job.current_phase ?? 0;
+      const phaseName = job.phase_name || '';
+
+      html += '<div class="job-card">';
+      html += '<div class="job-card-top">';
+      html += '<div>';
+      html += '<div class="job-id">' + truncateId(job.job_id || job.id) + '</div>';
+      html += '<div class="job-part">' + stageLabel + partLabel + '</div>';
+      if (job.fin_id) html += '<div class="job-fin">Fin: ' + job.fin_id + '</div>';
+      html += '</div>';
+      html += '<span class="badge ' + badgeClass + '">';
+      if (status === 'RUNNING') html += '<span class="pulse-dot"></span>';
+      html += status + '</span>';
+      html += '</div>';
+
+      if (status === 'RUNNING') {
+        const pct = Math.min(100, Math.max(0, progress));
+        html += '<div class="progress-wrap">';
+        html += '<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div>';
+        html += '<div class="progress-text">';
+        if (phaseName) html += 'Phase ' + currentPhase + '/' + totalPhases + ': ' + phaseName;
+        else html += Math.round(pct) + '% complete';
+        html += '</div>';
+        html += '</div>';
+      }
+
+      html += '<div class="job-meta">';
+      html += '<span class="job-duration">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+      html += formatDuration(elapsed);
+      html += '</span>';
+      html += '<div class="job-actions">';
+      if (status === 'RUNNING') {
+        html += '<button class="btn btn-danger btn-sm" onclick="cancelJob(\'' + (job.job_id || job.id) + '\')">Cancel</button>';
+      } else if (status === 'FAILED') {
+        html += '<button class="btn btn-success btn-sm" onclick="retryJob(\'' + (job.job_id || job.id) + '\')">Retry</button>';
+      } else if (status === 'COMPLETE') {
+        html += '<a href="/reports" class="btn btn-outline btn-sm" style="text-decoration:none">View Report</a>';
+      }
+      html += '</div>';
+      html += '</div>';
+
+      html += '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function renderEmpty() {
+    document.getElementById('jobs-container').innerHTML =
+      '<div class="empty-state">' +
+      '<h3>No Batch Jobs</h3>' +
+      '<p>Submit a new pipeline job using the form above to get started.</p>' +
+      '</div>';
+  }
+
+  function managePoll(jobs) {
+    const arr = Array.isArray(jobs) ? jobs : [];
+    const hasActive = arr.some(j => {
+      const s = (j.status || '').toUpperCase();
+      return s === 'RUNNING' || s === 'QUEUED';
+    });
+    if (hasActive && !pollTimer) {
+      pollTimer = setInterval(loadJobs, POLL_INTERVAL);
+    } else if (!hasActive && pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  window.cancelJob = async function(id) {
+    try {
+      const res = await fetch('/api/pipeline/jobs/' + encodeURIComponent(id) + '/cancel', { method: 'POST' });
+      if (!res.ok) throw new Error('Cancel failed');
+      loadJobs();
+    } catch (e) {
+      showError('Failed to cancel job: ' + e.message);
+    }
+  };
+
+  window.retryJob = async function(id) {
+    try {
+      const res = await fetch('/api/pipeline/jobs/' + encodeURIComponent(id) + '/retry', { method: 'POST' });
+      if (!res.ok) throw new Error('Retry failed');
+      loadJobs();
+    } catch (e) {
+      showError('Failed to retry job: ' + e.message);
+    }
+  };
+
+  window.clearCompleted = async function() {
+    try {
+      const res = await fetch('/api/pipeline/jobs/completed', { method: 'DELETE' });
+      if (!res.ok) throw new Error('Clear failed');
+      loadJobs();
+    } catch (e) {
+      showError('Failed to clear completed jobs: ' + e.message);
+    }
+  };
+
+  loadRotorConfigs();
+  loadJobs();
+})();
+</script>
+
+</body>
+</html>
