@@ -1,0 +1,701 @@
+{
+
+    "tbody": {
+        "row": [
+            {
+                "entry": [
+                    {
+                        "para": {
+                            "internalRef": [
+                                {
+                                    "@internalRefId": "gra002",
+                                    "@internalRefTargetType": "graphic"
+                                },
+                                {
+                                    "@internalRefId": "gra003",
+                                    "@internalRefTargetType": "graphic"
+                                },
+                                {
+                                    "@internalRefId": "gra004",
+                                    "@internalRefTargetType": "graphic"
+                                },
+                                {
+                                    "@internalRefId": "gra013",
+                                    "@internalRefTargetType": "graphic"
+                                },
+                                {
+                                    "@internalRefId": "gra014",
+                                    "@internalRefTargetType": "graphic"
+                                },
+                                {
+                                    "@internalRefId": "gra019",
+                                    "@internalRefTargetType": "graphic"
+                                }
+                            ],
+                            "#text": "12. AIRFOIL LEADING EDGE (AREA A2) - Nicks, dents. See , , , , , and ."
+                        },
+                        "segments": {
+                            "s1": "12. AIRFOIL LEADING EDGE (AREA A2) - Nicks, dents",
+                            "s2": "See , , , , , and"
+                        }
+                    },
+                    {
+                        "para": [
+                            {
+                                "internalRef": [
+                                    {
+                                        "@internalRefId": "gra013",
+                                        "@internalRefTargetType": "graphic"
+                                    },
+                                    {
+                                        "@internalRefId": "gra019",
+                                        "@internalRefTargetType": "graphic"
+                                    }
+                                ],
+                                "#text": "Two maximum combined between AREA A2, and AREA A3, 0.015 inch maximum depth in chordwise direction for damage contacting leading edge (extending into both concave and convex sides). Minimum 0.250 inch separation. See  and GROUP OR eight maximum, 0.010 inch maximum depth in chordwise direction for damage contacting leading edge (extending into both concave and convex sides). Minimum separation must be more than depth of deepest flaw present. Nicks and dents 0.002 inch round bottom and below must not be counted in overall defect count and separation limit does not apply as long as defects are visually separated. See  and GROUP OR four maximum nicks and dents for each airfoil combined across AREA A2, AREA A3, AREA B2, AREA B3, AREA G1, AREA G2, and AREA H. Include AREA E3 only for nicks and dents reported on those areas that are more than 0.004 inch up to 0.005 inch, 20 maximum surface nicks and dents combined across 10 airfoils, 0.005 inch maximum depth round bottom. Sharp bottom nicks are not serviceable. Minimum separation must be more than depth of deepest flaw present. Nicks and dents 0.002 inch round bottom and below must not be counted in overall defect count and separation limit does not apply as long as defects are visually separated. See  and ."
+                            }
+                        ],
+                        "Area": "12. AIRFOIL LEADING EDGE (AREA A2)",
+                        "Defect_list": [
+                            "Nicks",
+                            "dents"
+                        ],
+                        "priority_block": {
+                            "priority rule 1": "Sharp bottom nicks are not serviceable"
+                        },
+                        "Rule_set": [
+                            {
+                                "rule_block_id": 0,
+                                "rules": {
+                                    "rule_0": {
+                                        "segment": "Two maximum combined between AREA A2, and AREA A3",
+                                        "area": [
+                                            "AREA A2",
+                                            "AREA A3"
+                                        ],
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "0.015",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_1": {
+                                        "segment": "0.015 inch maximum depth in chordwise direction for damage contacting leading edge (extending into both concave and convex sides)",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_2": {
+                                        "segment": "Minimum 0.250 inch separation",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "0.250",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "rule_block_id": 1,
+                                "rules": {
+                                    "rule_0": {
+                                        "segment": "eight maximum",
+                                        "area": "-1",
+                                        "max_number": "8",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_1": {
+                                        "segment": "0.010 inch maximum depth in chordwise direction for damage contacting leading edge (extending into both concave and convex sides)",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "0.010",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "damage contacting leading edge (extending into both concave and convex sides)",
+                                            "then": "check 0.010 inch maximum depth in chordwise direction",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_2": {
+                                        "segment": "Minimum separation must be more than depth of deepest flaw present",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "more than depth of deepest flaw present",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_3": {
+                                        "segment": "Nicks and dents 0.002 inch round bottom and below must not be counted in overall defect count",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "Global",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "round bottom Nicks and dents 0.002 inch and below",
+                                            "then": "do not count in overall defect count",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_4": {
+                                        "segment": "separation limit does not apply as long as defects are visually separated",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "Global",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "defects are visually separated",
+                                            "then": "separation limit does not apply",
+                                            "else": "-1"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "rule_block_id": 2,
+                                "rules": {
+                                    "rule_0": {
+                                        "segment": "four maximum nicks and dents for each airfoil combined across AREA A2, AREA A3, AREA B2, AREA B3, AREA G1, AREA G2, and AREA H",
+                                        "area": [
+                                            "AREA A2",
+                                            "AREA A3",
+                                            "AREA B2",
+                                            "AREA B3",
+                                            "AREA G1",
+                                            "AREA G2",
+                                            "AREA H"
+                                        ],
+                                        "max_number": "4",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_1": {
+                                        "segment": "Include AREA E3 only for nicks and dents reported on those areas that are more than 0.004 inch up to 0.005 inch",
+                                        "area": [
+                                            "E3"
+                                        ],
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "nicks and dents reported on those areas that are more than 0.004 inch up to 0.005 inch",
+                                            "then": "Include AREA E3",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_2": {
+                                        "segment": "20 maximum surface nicks and dents combined across 10 airfoils",
+                                        "area": "-1",
+                                        "max_number": "20",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "Global",
+                                        "check_against": "10 airfoils",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_3": {
+                                        "segment": "0.005 inch maximum depth round bottom",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "0.005",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_4": {
+                                        "segment": "Sharp bottom nicks are not serviceable",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_5": {
+                                        "segment": "Minimum separation must be more than depth of deepest flaw present",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "more than depth of deepest flaw present",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_6": {
+                                        "segment": "Nicks and dents 0.002 inch round bottom and below must not be counted in overall defect count",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "Global",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "round bottom Nicks and dents 0.002 inch and below",
+                                            "then": "do not count in overall defect count",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_7": {
+                                        "segment": "separation limit does not apply as long as defects are visually separated",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "Global",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "defects are visually separated",
+                                            "then": "separation limit does not apply",
+                                            "else": "-1"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "para": "0.080 inch maximum depth",
+                        "Area": "12. AIRFOIL LEADING EDGE (AREA A2)",
+                        "Defect_list": [
+                            "Nicks",
+                            "dents"
+                        ],
+                        "priority_block": {},
+                        "Rule_set": [
+                            {
+                                "rule_block_id": 0,
+                                "rules": {
+                                    "rule_0": {
+                                        "segment": "0.080 inch maximum depth",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "0.080",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "para": {
+                            "dmRef": {
+                                "dmRefIdent": {
+                                    "dmCode": {
+                                        "@assyCode": "0050",
+                                        "@disassyCode": "02",
+                                        "@disassyCodeVariant": "0AA",
+                                        "@infoCode": "649",
+                                        "@infoCodeVariant": "B",
+                                        "@itemLocationCode": "H",
+                                        "@modelIdentCode": "PWF135",
+                                        "@subSubSystemCode": "1",
+                                        "@subSystemCode": "3",
+                                        "@systemCode": "72",
+                                        "@systemDiffCode": "AAA"
+                                    }
+                                },
+                                "dmRefAddressItems": {
+                                    "dmTitle": {
+                                        "techName": "5th Stage Axial Compressor Rotor",
+                                        "infoName": "Blend (Airfoil)"
+                                    }
+                                }
+                            },
+                            "#text": "Blend 5th stage rotor [1]. Refer to ."
+                        },
+                        "segments": {
+                            "s1": "Blend 5th stage rotor [1]",
+                            "s2": "Refer to"
+                        }
+                    }
+                ]
+            },
+            {
+                "entry": [
+                    {
+                        "para": {
+                            "internalRef": [
+                                {
+                                    "@internalRefId": "gra002",
+                                    "@internalRefTargetType": "graphic"
+                                },
+                                {
+                                    "@internalRefId": "gra003",
+                                    "@internalRefTargetType": "graphic"
+                                },
+                                {
+                                    "@internalRefId": "gra004",
+                                    "@internalRefTargetType": "graphic"
+                                }
+                            ],
+                            "#text": "13. AIRFOIL LEADING EDGE (AREA A2) - Scratches. See , , and ."
+                        },
+                        "segments": {
+                            "s1": "13. AIRFOIL LEADING EDGE (AREA A2) - Scratches",
+                            "s2": "See , , and"
+                        }
+                    },
+                    {
+                        "para": [
+                            "Four maximum scratches for each airfoil, 20 maximum scratches combined across 10 airfoils, scratches cannot cross, 0.002 inch maximum depth, 0.170 inch maximum length GROUP OR 0.001 inch maximum depth. For scratches more than 0.001 inch depth that are separated by less than 0.015 inch length, those scratches must be considered as single scratch by adding their lengths."
+                        ],
+                        "Area": "13. AIRFOIL LEADING EDGE (AREA A2)",
+                        "Defect_list": [
+                            "Scratches"
+                        ],
+                        "priority_block": {
+                            "priority rule 1": "scratches cannot cross"
+                        },
+                        "Rule_set": [
+                            {
+                                "rule_block_id": 0,
+                                "rules": {
+                                    "rule_0": {
+                                        "segment": "Four maximum scratches for each airfoil",
+                                        "area": "-1",
+                                        "max_number": "4",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_1": {
+                                        "segment": "20 maximum scratches combined across 10 airfoils",
+                                        "area": "-1",
+                                        "max_number": "20",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "Global",
+                                        "check_against": "10 airfoils",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_2": {
+                                        "segment": "scratches cannot cross",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_3": {
+                                        "segment": "0.002 inch maximum depth",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "0.002",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_4": {
+                                        "segment": "0.170 inch maximum length",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "0.170",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "rule_block_id": 1,
+                                "rules": {
+                                    "rule_0": {
+                                        "segment": "0.001 inch maximum depth",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "0.001",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    },
+                                    "rule_1": {
+                                        "segment": "For scratches more than 0.001 inch depth that are separated by less than 0.015 inch length, those scratches must be considered as single scratch by adding their lengths",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "0.001",
+                                        "max_area": "-1",
+                                        "min_separation": "0.015",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "-1",
+                                        "logic": {
+                                            "if_condition": "scratches more than 0.001 inch depth that are separated by less than 0.015 inch length",
+                                            "then": "consider as single scratch by adding their lengths",
+                                            "else": "-1"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "para": "Not repairable",
+                        "Area": "13. AIRFOIL LEADING EDGE (AREA A2)",
+                        "Defect_list": [
+                            "Scratches"
+                        ],
+                        "priority_block": {
+                            "priority rule 1": "Not repairable"
+                        },
+                        "Rule_set": [
+                            {
+                                "rule_block_id": 0,
+                                "rules": {
+                                    "rule_0": {
+                                        "segment": "Not repairable",
+                                        "area": "-1",
+                                        "max_number": "-1",
+                                        "max_length": "-1",
+                                        "max_depth": "-1",
+                                        "max_area": "-1",
+                                        "min_separation": "-1",
+                                        "tier": "-1",
+                                        "check_against": "-1",
+                                        "priority": "1",
+                                        "logic": {
+                                            "if_condition": "-1",
+                                            "then": "-1",
+                                            "else": "-1"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "para": {
+                            "dmRef": [
+                                {
+                                    "dmRefIdent": {
+                                        "dmCode": {
+                                            "@assyCode": "0050",
+                                            "@disassyCode": "00",
+                                            "@disassyCodeVariant": "0AA",
+                                            "@infoCode": "530",
+                                            "@infoCodeVariant": "A",
+                                            "@itemLocationCode": "D",
+                                            "@modelIdentCode": "PWF135",
+                                            "@subSubSystemCode": "1",
+                                            "@subSystemCode": "3",
+                                            "@systemCode": "72",
+                                            "@systemDiffCode": "AAA"
+                                        }
+                                    },
+                                    "dmRefAddressItems": {
+                                        "dmTitle": {
+                                            "techName": "Compressor Rotor Assembly",
+                                            "infoName": "Disassemble procedure"
+                                        }
+                                    }
+                                },
+                                {
+                                    "dmRefIdent": {
+                                        "dmCode": {
+                                            "@assyCode": "0050",
+                                            "@disassyCode": "00",
+                                            "@disassyCodeVariant": "0AA",
+                                            "@infoCode": "710",
+                                            "@infoCodeVariant": "A",
+                                            "@itemLocationCode": "D",
+                                            "@modelIdentCode": "PWF135",
+                                            "@subSubSystemCode": "1",
+                                            "@subSystemCode": "3",
+                                            "@systemCode": "72",
+                                            "@systemDiffCode": "AAA"
+                                        }
+                                    },
+                                    "dmRefAddressItems": {
+                                        "dmTitle": {
+                                            "techName": "Compressor Rotor Assembly",
+                                            "infoName": "Assemble procedure"
+                                        }
+                                    }
+                                }
+                            ],
+                            "#text": "Replace 5th stage rotor [1]. Refer to  and ."
+                        },
+                        "segments": {
+                            "s1": "Replace 5th stage rotor [1]",
+                            "s2": "Refer to  and"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+
+}

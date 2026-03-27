@@ -8,6 +8,8 @@
   "inspection_type": "Visual examination",
   "issue_date": "2025-04-04",
   "issue_number": "013",
+  "llm_models_used": ["qwen2.5_7b", "llama3_8b"],
+  "s1000d_llm_source_files": ["s1000d_limits_4119905.json", "s1000d_llm_rules_llama3.json"],
   "areas": {
     "A1": {
       "name": "Airfoil Leading Edge (inner half)",
@@ -143,6 +145,9 @@
       "primary_area": "A2",
       "edge": "LE",
       "defect_types": ["scratch"],
+      "priority_block": {
+        "priority_rule_1": "scratches cannot cross"
+      },
       "rule_blocks": [
         {
           "block_id": "1a",
@@ -168,6 +173,11 @@
               "sharp_bottom_serviceable": true,
               "ignore_if_round_bottom_below": null,
               "merge_if_separation_below": 0.015,
+              "llm_source": "llama3_8b",
+              "logic": {
+                "if_condition": "scratches more than 0.001 inch depth that are separated by less than 0.015 inch length",
+                "then": "consider as single scratch by adding their lengths"
+              },
               "notes": "Priority rule — evaluate first. Scratches within 0.015 in merge into a single defect with summed length."
             }
           ]
@@ -193,6 +203,7 @@
               "direction": null,
               "concave_to_convex": false,
               "cannot_cross": true,
+              "priority": "1",
               "sharp_bottom_serviceable": true,
               "ignore_if_round_bottom_below": null,
               "merge_if_separation_below": null,
@@ -594,6 +605,9 @@
       "primary_area": "A2",
       "edge": "LE",
       "defect_types": ["nick", "dent"],
+      "priority_block": {
+        "priority_rule_1": "Sharp bottom nicks are not serviceable"
+      },
       "rule_blocks": [
         {
           "block_id": "7a",
@@ -619,6 +633,11 @@
               "sharp_bottom_serviceable": true,
               "ignore_if_round_bottom_below": null,
               "merge_if_separation_below": null,
+              "llm_source": "llama3_8b",
+              "logic": {
+                "if_condition": "damage contacting leading edge (extending into both concave and convex sides)",
+                "then": "check 0.010 inch maximum depth in chordwise direction"
+              },
               "notes": "Combined count across A2 and A3 leading edge zones."
             }
           ]
@@ -647,6 +666,19 @@
               "sharp_bottom_serviceable": true,
               "ignore_if_round_bottom_below": 0.002,
               "merge_if_separation_below": null,
+              "llm_source": "llama3_8b",
+              "logic": [
+                {
+                  "rule_ref": "rule_3",
+                  "if_condition": "round bottom Nicks and dents 0.002 inch and below",
+                  "then": "do not count in overall defect count"
+                },
+                {
+                  "rule_ref": "rule_4",
+                  "if_condition": "defects are visually separated",
+                  "then": "separation limit does not apply"
+                }
+              ],
               "notes": "Min separation is dynamic — must exceed depth of the deepest flaw."
             }
           ]
@@ -675,6 +707,12 @@
               "sharp_bottom_serviceable": false,
               "ignore_if_round_bottom_below": 0.002,
               "merge_if_separation_below": null,
+              "llm_source": "llama3_8b",
+              "logic": {
+                "rule_ref": "rule_1",
+                "if_condition": "nicks and dents reported on those areas that are more than 0.004 inch up to 0.005 inch",
+                "then": "Include AREA E3"
+              },
               "notes": "Same cross-area pool as rule 3b."
             }
           ]
