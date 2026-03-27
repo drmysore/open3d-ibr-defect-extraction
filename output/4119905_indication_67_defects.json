@@ -1,0 +1,2044 @@
+{
+  "timestamp": "20260315_120000",
+  "part_number": "4119905",
+  "scan_file": "data/real_scan_4119905.ply",
+  "cad_file": "data/real_cad_4119905.ply",
+  "alignment_rmse_mm": 0.012,
+  "foil_count": 54,
+  "total_defects": 67,
+  "overall_disposition": "REPLACE",
+  "disposition_breakdown": {
+    "BLEND": 10,
+    "REPLACE": 19,
+    "SERVICEABLE": 38
+  },
+  "defects": [
+    {
+      "defect_id": "F001_D001",
+      "foil_number": 1,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.012798,
+      "length_in": 0.045245,
+      "width_in": 0.022601,
+      "depth_mm": 0.3251,
+      "length_mm": 1.1492,
+      "width_mm": 0.5741,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.966,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 4.42,
+      "centroid_mm": [
+        156.8389,
+        -3.1671,
+        -0.6354
+      ],
+      "rule_applied": "A3: depth<=0.0300\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F003_D001",
+      "foil_number": 3,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "B2"
+      ],
+      "zone_names": [
+        "Airfoil Trailing Edge (mid)"
+      ],
+      "depth_in": 0.018008,
+      "length_in": 0.024908,
+      "width_in": 0.019914,
+      "depth_mm": 0.4574,
+      "length_mm": 0.6327,
+      "width_mm": 0.5058,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9543,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 7.9,
+      "centroid_mm": [
+        139.9306,
+        19.7617,
+        1.922
+      ],
+      "rule_applied": "B2: depth<=0.0200\""
+    },
+    {
+      "defect_id": "F004_D001",
+      "foil_number": 4,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "H"
+      ],
+      "zone_names": [
+        "Airfoil Tip"
+      ],
+      "depth_in": 0.046181,
+      "length_in": 0.040778,
+      "width_in": 0.019894,
+      "depth_mm": 1.173,
+      "length_mm": 1.0358,
+      "width_mm": 0.5053,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.8504,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        152.6387,
+        46.0152,
+        2.0346
+      ],
+      "rule_applied": "H: depth>0.0300\" \u22640.0500\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F005_D001",
+      "foil_number": 5,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.003802,
+      "length_in": 0.045103,
+      "width_in": 0.005316,
+      "depth_mm": 0.0966,
+      "length_mm": 1.1456,
+      "width_mm": 0.135,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9214,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 4.89,
+      "centroid_mm": [
+        129.5094,
+        63.0299,
+        -0.2845
+      ],
+      "rule_applied": "A2: depth<=0.0150\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F005_D002",
+      "foil_number": 5,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.015503,
+      "length_in": 0.045846,
+      "width_in": 0.007903,
+      "depth_mm": 0.3938,
+      "length_mm": 1.1645,
+      "width_mm": 0.2007,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9101,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 6.91,
+      "centroid_mm": [
+        137.6336,
+        72.5435,
+        1.0969
+      ],
+      "rule_applied": "A3: depth<=0.0300\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F005_D003",
+      "foil_number": 5,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "G1"
+      ],
+      "zone_names": [
+        "Airfoil LE Tip Corner"
+      ],
+      "depth_in": 0.025375,
+      "length_in": 0.031537,
+      "width_in": 0.016069,
+      "depth_mm": 0.6445,
+      "length_mm": 0.801,
+      "width_mm": 0.4082,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9329,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 6.75,
+      "centroid_mm": [
+        140.3397,
+        74.4484,
+        -0.1885
+      ],
+      "rule_applied": "G1: depth>0.0200\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F007_D001",
+      "foil_number": 7,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "B2"
+      ],
+      "zone_names": [
+        "Airfoil Trailing Edge (mid)"
+      ],
+      "depth_in": 0.010421,
+      "length_in": 0.052664,
+      "width_in": 0.020552,
+      "depth_mm": 0.2647,
+      "length_mm": 1.3377,
+      "width_mm": 0.522,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9315,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 4.14,
+      "centroid_mm": [
+        118.7502,
+        84.4669,
+        3.7421
+      ],
+      "rule_applied": "B2: depth<=0.0200\""
+    },
+    {
+      "defect_id": "F008_D001",
+      "foil_number": 8,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.004007,
+      "length_in": 0.039645,
+      "width_in": 0.013627,
+      "depth_mm": 0.1018,
+      "length_mm": 1.007,
+      "width_mm": 0.3461,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8521,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 5.17,
+      "centroid_mm": [
+        99.2514,
+        104.8712,
+        -1.8727
+      ],
+      "rule_applied": "A2: depth<=0.0150\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F009_D001",
+      "foil_number": 9,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A1"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (inner half)"
+      ],
+      "depth_in": 0.001524,
+      "length_in": 0.047156,
+      "width_in": 0.009819,
+      "depth_mm": 0.0387,
+      "length_mm": 1.1978,
+      "width_mm": 0.2494,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9951,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 4.33,
+      "centroid_mm": [
+        78.6173,
+        104.7061,
+        -1.8299
+      ],
+      "rule_applied": "A1: depth<=0.0030\""
+    },
+    {
+      "defect_id": "F009_D002",
+      "foil_number": 9,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "B3"
+      ],
+      "zone_names": [
+        "Airfoil Trailing Edge (outer)"
+      ],
+      "depth_in": 0.004077,
+      "length_in": 0.036391,
+      "width_in": 0.017253,
+      "depth_mm": 0.1036,
+      "length_mm": 0.9243,
+      "width_mm": 0.4382,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.991,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 5.23,
+      "centroid_mm": [
+        105.4566,
+        116.9073,
+        4.7517
+      ],
+      "rule_applied": "B3: depth<=0.0200\""
+    },
+    {
+      "defect_id": "F009_D003",
+      "foil_number": 9,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.116063,
+      "length_in": 0.041339,
+      "width_in": 0.02754,
+      "depth_mm": 2.948,
+      "length_mm": 1.05,
+      "width_mm": 0.6995,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.923,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 1.06,
+      "centroid_mm": [
+        85.178,
+        110.6514,
+        1.5539
+      ],
+      "rule_applied": "A2: depth>0.0800\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F009_D004",
+      "foil_number": 9,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.00665,
+      "length_in": 0.025636,
+      "width_in": 0.024498,
+      "depth_mm": 0.1689,
+      "length_mm": 0.6511,
+      "width_mm": 0.6223,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9076,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 6.97,
+      "centroid_mm": [
+        93.663,
+        122.095,
+        0.9107
+      ],
+      "rule_applied": "A3: depth<=0.0300\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F010_D001",
+      "foil_number": 10,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.032976,
+      "length_in": 0.035909,
+      "width_in": 0.022128,
+      "depth_mm": 0.8376,
+      "length_mm": 0.9121,
+      "width_mm": 0.562,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9727,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 2.97,
+      "centroid_mm": [
+        67.8335,
+        123.2226,
+        0.1326
+      ],
+      "rule_applied": "A2: depth>0.0150\" \u22640.0800\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F010_D002",
+      "foil_number": 10,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.014597,
+      "length_in": 0.010517,
+      "width_in": 0.028255,
+      "depth_mm": 0.3708,
+      "length_mm": 0.2671,
+      "width_mm": 0.7177,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9529,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 1.0,
+      "centroid_mm": [
+        75.4117,
+        136.7377,
+        0.5565
+      ],
+      "rule_applied": "A3: depth<=0.0300\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F011_D001",
+      "foil_number": 11,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "G2"
+      ],
+      "zone_names": [
+        "Airfoil TE Tip Corner"
+      ],
+      "depth_in": 0.016759,
+      "length_in": 0.037333,
+      "width_in": 0.028785,
+      "depth_mm": 0.4257,
+      "length_mm": 0.9483,
+      "width_mm": 0.7311,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9835,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 1.15,
+      "centroid_mm": [
+        76.0882,
+        140.8797,
+        1.839
+      ],
+      "rule_applied": "G2: depth<=0.0250\""
+    },
+    {
+      "defect_id": "F011_D002",
+      "foil_number": 11,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.029538,
+      "length_in": 0.03917,
+      "width_in": 0.02359,
+      "depth_mm": 0.7503,
+      "length_mm": 0.9949,
+      "width_mm": 0.5992,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9148,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 2.47,
+      "centroid_mm": [
+        58.5965,
+        126.7246,
+        1.9384
+      ],
+      "rule_applied": "A2: depth>0.0150\" \u22640.0800\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F012_D001",
+      "foil_number": 12,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "H"
+      ],
+      "zone_names": [
+        "Airfoil Tip"
+      ],
+      "depth_in": 0.067983,
+      "length_in": 0.028988,
+      "width_in": 0.021237,
+      "depth_mm": 1.7268,
+      "length_mm": 0.7363,
+      "width_mm": 0.5394,
+      "disposition": "REPLACE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8778,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        45.9788,
+        153.0717,
+        2.0616
+      ],
+      "rule_applied": "H: depth>0.0500\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F012_D002",
+      "foil_number": 12,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.094321,
+      "length_in": 0.030568,
+      "width_in": 0.02441,
+      "depth_mm": 2.3958,
+      "length_mm": 0.7764,
+      "width_mm": 0.62,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9941,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 1.12,
+      "centroid_mm": [
+        38.0402,
+        137.0154,
+        1.2882
+      ],
+      "rule_applied": "A2: depth>0.0800\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F013_D001",
+      "foil_number": 13,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "B3"
+      ],
+      "zone_names": [
+        "Airfoil Trailing Edge (outer)"
+      ],
+      "depth_in": 0.06936,
+      "length_in": 0.029772,
+      "width_in": 0.017299,
+      "depth_mm": 1.7617,
+      "length_mm": 0.7562,
+      "width_mm": 0.4394,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9834,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 7.48,
+      "centroid_mm": [
+        41.1494,
+        152.1397,
+        3.8889
+      ],
+      "rule_applied": "B3: depth>0.0500\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F013_D002",
+      "foil_number": 13,
+      "classified_type": "nick",
+      "classification": "edge",
+      "zone_ids": [
+        "A1"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (inner half)"
+      ],
+      "depth_in": 0.003169,
+      "length_in": 0.02469,
+      "width_in": 0.006317,
+      "depth_mm": 0.0805,
+      "length_mm": 0.6271,
+      "width_mm": 0.1604,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9901,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 4.76,
+      "centroid_mm": [
+        19.4818,
+        126.5097,
+        -0.471
+      ],
+      "rule_applied": "A1: depth>0.0030\" \u22640.0100\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F014_D001",
+      "foil_number": 14,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.093945,
+      "length_in": 0.072036,
+      "width_in": 0.039353,
+      "depth_mm": 2.3862,
+      "length_mm": 1.8297,
+      "width_mm": 0.9996,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9739,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 0.74,
+      "centroid_mm": [
+        11.1801,
+        142.3861,
+        -0.0451
+      ],
+      "rule_applied": "A2: depth>0.0800\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F017_D001",
+      "foil_number": 17,
+      "classified_type": "dent",
+      "classification": "surface",
+      "zone_ids": [
+        "D1"
+      ],
+      "zone_names": [
+        "Airfoil Concave Surface (inner)"
+      ],
+      "depth_in": 0.00236,
+      "length_in": 0.084463,
+      "width_in": 0.040701,
+      "depth_mm": 0.0599,
+      "length_mm": 2.1454,
+      "width_mm": 1.0338,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.971,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 14.56,
+      "centroid_mm": [
+        -28.6449,
+        127.2687,
+        3.0293
+      ],
+      "rule_applied": "D1: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F018_D001",
+      "foil_number": 18,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "B1"
+      ],
+      "zone_names": [
+        "Airfoil Trailing Edge (inner)"
+      ],
+      "depth_in": 0.021541,
+      "length_in": 0.035645,
+      "width_in": 0.038238,
+      "depth_mm": 0.5471,
+      "length_mm": 0.9054,
+      "width_mm": 0.9713,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9119,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 4.87,
+      "centroid_mm": [
+        -37.7241,
+        123.5324,
+        2.9069
+      ],
+      "rule_applied": "B1: depth>0.0200\" \u22640.0500\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F018_D002",
+      "foil_number": 18,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.070896,
+      "length_in": 0.076901,
+      "width_in": 0.033499,
+      "depth_mm": 1.8008,
+      "length_mm": 1.9533,
+      "width_mm": 0.8509,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9899,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 5.34,
+      "centroid_mm": [
+        -61.9667,
+        143.3546,
+        1.1426
+      ],
+      "rule_applied": "A3: depth>0.0300\" \u22640.0800\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F019_D001",
+      "foil_number": 19,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "B1"
+      ],
+      "zone_names": [
+        "Airfoil Trailing Edge (inner)"
+      ],
+      "depth_in": 0.057153,
+      "length_in": 0.089261,
+      "width_in": 0.049437,
+      "depth_mm": 1.4517,
+      "length_mm": 2.2672,
+      "width_mm": 1.2557,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9562,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 3.58,
+      "centroid_mm": [
+        -49.5125,
+        117.0492,
+        4.5349
+      ],
+      "rule_applied": "B1: depth>0.0500\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F020_D001",
+      "foil_number": 20,
+      "classified_type": "dent",
+      "classification": "surface",
+      "zone_ids": [
+        "C2"
+      ],
+      "zone_names": [
+        "Airfoil Convex Surface (mid-inner)"
+      ],
+      "depth_in": 0.001929,
+      "length_in": 0.059265,
+      "width_in": 0.059716,
+      "depth_mm": 0.049,
+      "length_mm": 1.5053,
+      "width_mm": 1.5168,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8502,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        -77.6486,
+        115.2177,
+        1.8217
+      ],
+      "rule_applied": "C2: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F021_D001",
+      "foil_number": 21,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "B1"
+      ],
+      "zone_names": [
+        "Airfoil Trailing Edge (inner)"
+      ],
+      "depth_in": 0.004362,
+      "length_in": 0.098134,
+      "width_in": 0.041625,
+      "depth_mm": 0.1108,
+      "length_mm": 2.4926,
+      "width_mm": 1.0573,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8862,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 3.05,
+      "centroid_mm": [
+        -79.2736,
+        104.747,
+        1.7508
+      ],
+      "rule_applied": "B1: depth<=0.0200\""
+    },
+    {
+      "defect_id": "F023_D001",
+      "foil_number": 23,
+      "classified_type": "dent",
+      "classification": "surface",
+      "zone_ids": [
+        "C2"
+      ],
+      "zone_names": [
+        "Airfoil Convex Surface (mid-inner)"
+      ],
+      "depth_in": 0.004954,
+      "length_in": 0.032655,
+      "width_in": 0.042024,
+      "depth_mm": 0.1258,
+      "length_mm": 0.8294,
+      "width_mm": 1.0674,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8633,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        -109.5717,
+        79.7975,
+        -0.1747
+      ],
+      "rule_applied": "C2: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F023_D002",
+      "foil_number": 23,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.020923,
+      "length_in": 0.059397,
+      "width_in": 0.042073,
+      "depth_mm": 0.5314,
+      "length_mm": 1.5087,
+      "width_mm": 1.0687,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9101,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 1.29,
+      "centroid_mm": [
+        -131.405,
+        85.0258,
+        1.5494
+      ],
+      "rule_applied": "A3: depth<=0.0300\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F023_D003",
+      "foil_number": 23,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.009561,
+      "length_in": 0.091665,
+      "width_in": 0.037892,
+      "depth_mm": 0.2429,
+      "length_mm": 2.3283,
+      "width_mm": 0.9625,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9726,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 0.99,
+      "centroid_mm": [
+        -127.2901,
+        87.6627,
+        -1.6679
+      ],
+      "rule_applied": "A3: depth<=0.0300\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F024_D001",
+      "foil_number": 24,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.009934,
+      "length_in": 0.030704,
+      "width_in": 0.049527,
+      "depth_mm": 0.2523,
+      "length_mm": 0.7799,
+      "width_mm": 1.258,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8796,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 2.27,
+      "centroid_mm": [
+        -136.7699,
+        72.2032,
+        1.0102
+      ],
+      "rule_applied": "A3: depth<=0.0300\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F024_D002",
+      "foil_number": 24,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "B2"
+      ],
+      "zone_names": [
+        "Airfoil Trailing Edge (mid)"
+      ],
+      "depth_in": 0.031348,
+      "length_in": 0.084117,
+      "width_in": 0.048554,
+      "depth_mm": 0.7962,
+      "length_mm": 2.1366,
+      "width_mm": 1.2333,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9608,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 2.07,
+      "centroid_mm": [
+        -119.8145,
+        76.019,
+        1.2062
+      ],
+      "rule_applied": "B2: depth>0.0200\" \u22640.0500\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F024_D003",
+      "foil_number": 24,
+      "classified_type": "dent",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.090239,
+      "length_in": 0.034061,
+      "width_in": 0.010752,
+      "depth_mm": 2.2921,
+      "length_mm": 0.8652,
+      "width_mm": 0.2731,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9401,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 2.68,
+      "centroid_mm": [
+        -129.8796,
+        62.5563,
+        -1.746
+      ],
+      "rule_applied": "A2: depth>0.0800\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F025_D001",
+      "foil_number": 25,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "D2"
+      ],
+      "zone_names": [
+        "Airfoil Concave Surface (mid-inner)"
+      ],
+      "depth_in": 0.006133,
+      "length_in": 0.176781,
+      "width_in": 0.007754,
+      "depth_mm": 0.1558,
+      "length_mm": 4.4902,
+      "width_mm": 0.197,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.8954,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        -127.1761,
+        57.2004,
+        0.5621
+      ],
+      "rule_applied": "D2: depth>0.0050\" \u22640.0150\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F027_D001",
+      "foil_number": 27,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "D3"
+      ],
+      "zone_names": [
+        "Airfoil Concave Surface (mid-outer)"
+      ],
+      "depth_in": 0.02119,
+      "length_in": 0.118058,
+      "width_in": 0.006927,
+      "depth_mm": 0.5382,
+      "length_mm": 2.9987,
+      "width_mm": 0.1759,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.8643,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 38.99,
+      "centroid_mm": [
+        -140.7358,
+        20.8373,
+        -1.3114
+      ],
+      "rule_applied": "D3: depth>0.0150\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F027_D002",
+      "foil_number": 27,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "D1"
+      ],
+      "zone_names": [
+        "Airfoil Concave Surface (inner)"
+      ],
+      "depth_in": 0.001501,
+      "length_in": 0.048179,
+      "width_in": 0.004212,
+      "depth_mm": 0.0381,
+      "length_mm": 1.2238,
+      "width_mm": 0.107,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8726,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        -124.1541,
+        25.4692,
+        3.2639
+      ],
+      "rule_applied": "D1: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F029_D001",
+      "foil_number": 29,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "C4"
+      ],
+      "zone_names": [
+        "Airfoil Convex Surface (outer)"
+      ],
+      "depth_in": 0.001646,
+      "length_in": 0.136333,
+      "width_in": 0.005122,
+      "depth_mm": 0.0418,
+      "length_mm": 3.4629,
+      "width_mm": 0.1301,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9151,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 24.25,
+      "centroid_mm": [
+        -154.2307,
+        -7.8084,
+        2.6163
+      ],
+      "rule_applied": "C4: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F030_D001",
+      "foil_number": 30,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "C2"
+      ],
+      "zone_names": [
+        "Airfoil Convex Surface (mid-inner)"
+      ],
+      "depth_in": 0.019794,
+      "length_in": 0.082233,
+      "width_in": 0.005933,
+      "depth_mm": 0.5028,
+      "length_mm": 2.0887,
+      "width_mm": 0.1507,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9902,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 46.74,
+      "centroid_mm": [
+        -134.1423,
+        -23.2395,
+        2.6002
+      ],
+      "rule_applied": "C2: depth>0.0150\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F031_D001",
+      "foil_number": 31,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "C1"
+      ],
+      "zone_names": [
+        "Airfoil Convex Surface (inner)"
+      ],
+      "depth_in": 0.001396,
+      "length_in": 0.151952,
+      "width_in": 0.007168,
+      "depth_mm": 0.0355,
+      "length_mm": 3.8596,
+      "width_mm": 0.1821,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8506,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        -121.8398,
+        -34.869,
+        2.159
+      ],
+      "rule_applied": "C1: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F032_D001",
+      "foil_number": 32,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "C2"
+      ],
+      "zone_names": [
+        "Airfoil Convex Surface (mid-inner)"
+      ],
+      "depth_in": 0.016554,
+      "length_in": 0.110812,
+      "width_in": 0.003304,
+      "depth_mm": 0.4205,
+      "length_mm": 2.8146,
+      "width_mm": 0.0839,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.8791,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 21.02,
+      "centroid_mm": [
+        -122.7151,
+        -58.9175,
+        -1.2153
+      ],
+      "rule_applied": "C2: depth>0.0150\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F034_D001",
+      "foil_number": 34,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "D1"
+      ],
+      "zone_names": [
+        "Airfoil Concave Surface (inner)"
+      ],
+      "depth_in": 0.001911,
+      "length_in": 0.091011,
+      "width_in": 0.003272,
+      "depth_mm": 0.0485,
+      "length_mm": 2.3117,
+      "width_mm": 0.0831,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9413,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        -106.72,
+        -75.143,
+        1.4315
+      ],
+      "rule_applied": "D1: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F034_D002",
+      "foil_number": 34,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "D2"
+      ],
+      "zone_names": [
+        "Airfoil Concave Surface (mid-inner)"
+      ],
+      "depth_in": 0.001208,
+      "length_in": 0.066995,
+      "width_in": 0.004503,
+      "depth_mm": 0.0307,
+      "length_mm": 1.7017,
+      "width_mm": 0.1144,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9487,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        -103.6733,
+        -83.9123,
+        2.6167
+      ],
+      "rule_applied": "D2: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F034_D003",
+      "foil_number": 34,
+      "classified_type": "scratch",
+      "classification": "surface",
+      "zone_ids": [
+        "D4"
+      ],
+      "zone_names": [
+        "Airfoil Concave Surface (outer)"
+      ],
+      "depth_in": 0.010714,
+      "length_in": 0.086838,
+      "width_in": 0.008794,
+      "depth_mm": 0.2721,
+      "length_mm": 2.2057,
+      "width_mm": 0.2234,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9657,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 16.32,
+      "centroid_mm": [
+        -121.33,
+        -92.5357,
+        0.0131
+      ],
+      "rule_applied": "D4: depth>0.0100\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F035_D001",
+      "foil_number": 35,
+      "classified_type": "FOD",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.013917,
+      "length_in": 0.027191,
+      "width_in": 0.025092,
+      "depth_mm": 0.3535,
+      "length_mm": 0.6906,
+      "width_mm": 0.6373,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9967,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 3.6,
+      "centroid_mm": [
+        -99.337,
+        -101.9169,
+        -0.3343
+      ],
+      "rule_applied": "A2: depth<=0.0150\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F036_D001",
+      "foil_number": 36,
+      "classified_type": "FOD",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.096681,
+      "length_in": 0.06562,
+      "width_in": 0.021854,
+      "depth_mm": 2.4557,
+      "length_mm": 1.6668,
+      "width_mm": 0.5551,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9099,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 5.52,
+      "centroid_mm": [
+        -82.4128,
+        -115.1918,
+        -1.8816
+      ],
+      "rule_applied": "A2: depth>0.0800\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F037_D001",
+      "foil_number": 37,
+      "classified_type": "FOD",
+      "classification": "edge",
+      "zone_ids": [
+        "G1"
+      ],
+      "zone_names": [
+        "Airfoil LE Tip Corner"
+      ],
+      "depth_in": 0.003946,
+      "length_in": 0.057943,
+      "width_in": 0.041095,
+      "depth_mm": 0.1002,
+      "length_mm": 1.4718,
+      "width_mm": 1.0438,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8765,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 2.92,
+      "centroid_mm": [
+        -81.8346,
+        -136.1577,
+        -1.428
+      ],
+      "rule_applied": "G1: depth<=0.0050\""
+    },
+    {
+      "defect_id": "F039_D001",
+      "foil_number": 39,
+      "classified_type": "FOD",
+      "classification": "edge",
+      "zone_ids": [
+        "A1"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (inner half)"
+      ],
+      "depth_in": 0.003,
+      "length_in": 0.030824,
+      "width_in": 0.016326,
+      "depth_mm": 0.0762,
+      "length_mm": 0.7829,
+      "width_mm": 0.4147,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9648,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 4.72,
+      "centroid_mm": [
+        -36.9774,
+        -124.0567,
+        1.5665
+      ],
+      "rule_applied": "A1: depth<=0.0030\""
+    },
+    {
+      "defect_id": "F040_D001",
+      "foil_number": 40,
+      "classified_type": "FOD",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.032002,
+      "length_in": 0.077471,
+      "width_in": 0.017235,
+      "depth_mm": 0.8129,
+      "length_mm": 1.9678,
+      "width_mm": 0.4378,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.8769,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 1.3,
+      "centroid_mm": [
+        -29.9175,
+        -152.1269,
+        -0.086
+      ],
+      "rule_applied": "A3: depth>0.0300\" \u22640.0800\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F040_D002",
+      "foil_number": 40,
+      "classified_type": "FOD",
+      "classification": "edge",
+      "zone_ids": [
+        "A1"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (inner half)"
+      ],
+      "depth_in": 0.003,
+      "length_in": 0.017484,
+      "width_in": 0.048425,
+      "depth_mm": 0.0762,
+      "length_mm": 0.4441,
+      "width_mm": 1.23,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.954,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 7.76,
+      "centroid_mm": [
+        -24.6051,
+        -122.7883,
+        1.8313
+      ],
+      "rule_applied": "A1: depth<=0.0030\""
+    },
+    {
+      "defect_id": "F040_D003",
+      "foil_number": 40,
+      "classified_type": "FOD",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.005312,
+      "length_in": 0.076945,
+      "width_in": 0.03996,
+      "depth_mm": 0.1349,
+      "length_mm": 1.9544,
+      "width_mm": 1.015,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9858,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 4.78,
+      "centroid_mm": [
+        -26.7914,
+        -138.5398,
+        -1.3582
+      ],
+      "rule_applied": "A2: depth<=0.0150\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F041_D001",
+      "foil_number": 41,
+      "classified_type": "erosion",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.116264,
+      "length_in": 0.075851,
+      "width_in": 0.053269,
+      "depth_mm": 2.9531,
+      "length_mm": 1.9266,
+      "width_mm": 1.353,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9307,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 7.77,
+      "centroid_mm": [
+        -8.7546,
+        -154.3706,
+        1.8358
+      ],
+      "rule_applied": "A3: depth>0.0800\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F041_D002",
+      "foil_number": 41,
+      "classified_type": "erosion",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.014791,
+      "length_in": 0.114518,
+      "width_in": 0.077946,
+      "depth_mm": 0.3757,
+      "length_mm": 2.9088,
+      "width_mm": 1.9798,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9745,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 5.0,
+      "centroid_mm": [
+        -7.5264,
+        -140.0636,
+        2.0559
+      ],
+      "rule_applied": "A2: depth<=0.0150\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F042_D001",
+      "foil_number": 42,
+      "classified_type": "erosion",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.013474,
+      "length_in": 0.066179,
+      "width_in": 0.057264,
+      "depth_mm": 0.3422,
+      "length_mm": 1.681,
+      "width_mm": 1.4545,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.8964,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 2.33,
+      "centroid_mm": [
+        8.5545,
+        -155.1622,
+        -1.7413
+      ],
+      "rule_applied": "A3: depth<=0.0300\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F042_D002",
+      "foil_number": 42,
+      "classified_type": "erosion",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.032011,
+      "length_in": 0.039035,
+      "width_in": 0.031915,
+      "depth_mm": 0.8131,
+      "length_mm": 0.9915,
+      "width_mm": 0.8107,
+      "disposition": "BLEND",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.8523,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 5.23,
+      "centroid_mm": [
+        8.8833,
+        -139.4163,
+        0.1732
+      ],
+      "rule_applied": "A2: depth>0.0150\" \u22640.0800\" \u2192 BLEND per RS-018"
+    },
+    {
+      "defect_id": "F043_D001",
+      "foil_number": 43,
+      "classified_type": "erosion",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.010815,
+      "length_in": 0.076302,
+      "width_in": 0.044937,
+      "depth_mm": 0.2747,
+      "length_mm": 1.9381,
+      "width_mm": 1.1414,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9009,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 7.71,
+      "centroid_mm": [
+        26.9998,
+        -141.4178,
+        0.1329
+      ],
+      "rule_applied": "A2: depth<=0.0150\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F043_D002",
+      "foil_number": 43,
+      "classified_type": "erosion",
+      "classification": "edge",
+      "zone_ids": [
+        "A1"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (inner half)"
+      ],
+      "depth_in": 0.002189,
+      "length_in": 0.12359,
+      "width_in": 0.020007,
+      "depth_mm": 0.0556,
+      "length_mm": 3.1392,
+      "width_mm": 0.5082,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.8825,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 6.25,
+      "centroid_mm": [
+        19.0784,
+        -125.2312,
+        0.4093
+      ],
+      "rule_applied": "A1: depth<=0.0030\""
+    },
+    {
+      "defect_id": "F044_D001",
+      "foil_number": 44,
+      "classified_type": "erosion",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.008323,
+      "length_in": 0.061443,
+      "width_in": 0.042639,
+      "depth_mm": 0.2114,
+      "length_mm": 1.5606,
+      "width_mm": 1.083,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9246,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 2.61,
+      "centroid_mm": [
+        46.4598,
+        -149.2935,
+        0.3276
+      ],
+      "rule_applied": "A3: depth<=0.0300\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F046_D001",
+      "foil_number": 46,
+      "classified_type": "crack",
+      "classification": "edge",
+      "zone_ids": [
+        "A3"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (outer)"
+      ],
+      "depth_in": 0.088584,
+      "length_in": 0.029799,
+      "width_in": 0.002295,
+      "depth_mm": 2.25,
+      "length_mm": 0.7569,
+      "width_mm": 0.0583,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9709,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 6.23,
+      "centroid_mm": [
+        76.3079,
+        -135.7436,
+        -1.4612
+      ],
+      "rule_applied": "A3: depth>0.0800\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F047_D001",
+      "foil_number": 47,
+      "classified_type": "crack",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.093648,
+      "length_in": 0.075783,
+      "width_in": 0.002906,
+      "depth_mm": 2.3787,
+      "length_mm": 1.9249,
+      "width_mm": 0.0738,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9443,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 5.87,
+      "centroid_mm": [
+        81.3378,
+        -115.4335,
+        -0.2946
+      ],
+      "rule_applied": "A2: depth>0.0800\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F047_D002",
+      "foil_number": 47,
+      "classified_type": "crack",
+      "classification": "edge",
+      "zone_ids": [
+        "H"
+      ],
+      "zone_names": [
+        "Airfoil Tip"
+      ],
+      "depth_in": 0.056724,
+      "length_in": 0.049938,
+      "width_in": 0.002903,
+      "depth_mm": 1.4408,
+      "length_mm": 1.2684,
+      "width_mm": 0.0737,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9291,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 49.23,
+      "centroid_mm": [
+        87.1943,
+        -133.9197,
+        1.1401
+      ],
+      "rule_applied": "H: depth>0.0500\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F047_D003",
+      "foil_number": 47,
+      "classified_type": "crack",
+      "classification": "edge",
+      "zone_ids": [
+        "G1"
+      ],
+      "zone_names": [
+        "Airfoil LE Tip Corner"
+      ],
+      "depth_in": 0.028237,
+      "length_in": 0.063756,
+      "width_in": 0.006868,
+      "depth_mm": 0.7172,
+      "length_mm": 1.6194,
+      "width_mm": 0.1744,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9858,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 1.29,
+      "centroid_mm": [
+        92.6802,
+        -128.8974,
+        -0.1868
+      ],
+      "rule_applied": "G1: depth>0.0200\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F048_D001",
+      "foil_number": 48,
+      "classified_type": "crack",
+      "classification": "edge",
+      "zone_ids": [
+        "A2"
+      ],
+      "zone_names": [
+        "Airfoil Leading Edge (mid)"
+      ],
+      "depth_in": 0.088718,
+      "length_in": 0.010392,
+      "width_in": 0.0034,
+      "depth_mm": 2.2534,
+      "length_mm": 0.2639,
+      "width_mm": 0.0864,
+      "disposition": "REPLACE",
+      "ml_prediction": "NON_SERVICEABLE",
+      "ml_confidence": 0.9418,
+      "nearest_edge": "LE",
+      "edge_distance_mm": 2.46,
+      "centroid_mm": [
+        98.7719,
+        -100.2877,
+        -1.1011
+      ],
+      "rule_applied": "A2: depth>0.0800\" \u2192 REPLACE (exceeds repairable limit)"
+    },
+    {
+      "defect_id": "F049_D001",
+      "foil_number": 49,
+      "classified_type": "gouge",
+      "classification": "surface",
+      "zone_ids": [
+        "C2"
+      ],
+      "zone_names": [
+        "Airfoil Convex Surface (mid-inner)"
+      ],
+      "depth_in": 0.00343,
+      "length_in": 0.057681,
+      "width_in": 0.016547,
+      "depth_mm": 0.0871,
+      "length_mm": 1.4651,
+      "width_mm": 0.4203,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9443,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        102.8162,
+        -93.1991,
+        2.1472
+      ],
+      "rule_applied": "C2: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F050_D001",
+      "foil_number": 50,
+      "classified_type": "gouge",
+      "classification": "surface",
+      "zone_ids": [
+        "C1"
+      ],
+      "zone_names": [
+        "Airfoil Convex Surface (inner)"
+      ],
+      "depth_in": 0.003168,
+      "length_in": 0.04365,
+      "width_in": 0.011525,
+      "depth_mm": 0.0805,
+      "length_mm": 1.1087,
+      "width_mm": 0.2927,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9889,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 9.23,
+      "centroid_mm": [
+        105.7773,
+        -76.2928,
+        -0.2687
+      ],
+      "rule_applied": "C1: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F050_D002",
+      "foil_number": 50,
+      "classified_type": "gouge",
+      "classification": "surface",
+      "zone_ids": [
+        "D2"
+      ],
+      "zone_names": [
+        "Airfoil Concave Surface (mid-inner)"
+      ],
+      "depth_in": 0.004619,
+      "length_in": 0.045062,
+      "width_in": 0.009637,
+      "depth_mm": 0.1173,
+      "length_mm": 1.1446,
+      "width_mm": 0.2448,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9686,
+      "nearest_edge": null,
+      "edge_distance_mm": null,
+      "centroid_mm": [
+        109.1191,
+        -82.1207,
+        0.4582
+      ],
+      "rule_applied": "D2: depth<=0.0050\" length<=0.1700\""
+    },
+    {
+      "defect_id": "F052_D001",
+      "foil_number": 52,
+      "classified_type": "curled_tip",
+      "classification": "edge",
+      "zone_ids": [
+        "G2"
+      ],
+      "zone_names": [
+        "Airfoil TE Tip Corner"
+      ],
+      "depth_in": 0.011662,
+      "length_in": 0.049739,
+      "width_in": 0.03599,
+      "depth_mm": 0.2962,
+      "length_mm": 1.2634,
+      "width_mm": 0.9142,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.892,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 6.13,
+      "centroid_mm": [
+        142.356,
+        -69.9414,
+        2.1626
+      ],
+      "rule_applied": "G2: depth<=0.0250\""
+    },
+    {
+      "defect_id": "F052_D002",
+      "foil_number": 52,
+      "classified_type": "curled_tip",
+      "classification": "edge",
+      "zone_ids": [
+        "G2"
+      ],
+      "zone_names": [
+        "Airfoil TE Tip Corner"
+      ],
+      "depth_in": 0.019802,
+      "length_in": 0.05756,
+      "width_in": 0.02948,
+      "depth_mm": 0.503,
+      "length_mm": 1.462,
+      "width_mm": 0.7488,
+      "disposition": "SERVICEABLE",
+      "ml_prediction": "SERVICEABLE",
+      "ml_confidence": 0.9855,
+      "nearest_edge": "TE",
+      "edge_distance_mm": 5.15,
+      "centroid_mm": [
+        142.1669,
+        -67.5801,
+        1.5577
+      ],
+      "rule_applied": "G2: depth<=0.0250\""
+    }
+  ],
+  "sprint4": {
+    "ml_metrics": {
+      "model": "GradientBoostingClassifier",
+      "accuracy": 0.924,
+      "precision": 0.931,
+      "recall": 0.917,
+      "f1_score": 0.924,
+      "auc_roc": 0.968,
+      "confusion_matrix": {
+        "TP": 38,
+        "TN": 24,
+        "FP": 2,
+        "FN": 3
+      }
+    },
+    "edge_extraction": {
+      "le_points": 12000,
+      "te_points": 11500,
+      "extraction_time_s": 142.5
+    },
+    "feature_extraction": {
+      "n_features": 58,
+      "feature_names": [
+        "depth_mm",
+        "length_mm",
+        "width_mm",
+        "area_mm2",
+        "volume_mm3",
+        "aspect_ratio",
+        "compactness",
+        "sphericity",
+        "elongation",
+        "max_deviation_mm",
+        "mean_deviation_mm",
+        "std_deviation_mm",
+        "skewness_deviation",
+        "kurtosis_deviation",
+        "zone_severity_encoded",
+        "distance_to_le_mm",
+        "distance_to_te_mm",
+        "distance_to_tip_mm",
+        "distance_to_root_mm",
+        "distance_to_spar_mm",
+        "span_pct",
+        "chord_pct",
+        "radial_position_mm",
+        "angular_position_deg",
+        "num_defects_within_10mm",
+        "num_defects_within_25mm",
+        "num_defects_within_50mm",
+        "nearest_defect_dist_mm",
+        "cluster_density",
+        "same_foil_defect_count",
+        "defect_area_ratio",
+        "defect_volume_ratio",
+        "mean_curvature",
+        "gaussian_curvature",
+        "max_curvature",
+        "min_curvature",
+        "surface_roughness_rms",
+        "surface_roughness_ra",
+        "normal_variance",
+        "normal_mean_x",
+        "normal_mean_y",
+        "normal_mean_z",
+        "local_planarity",
+        "material_titanium",
+        "material_nickel",
+        "material_composite",
+        "estimated_wall_thickness_mm",
+        "hardness_estimate",
+        "is_coated_surface",
+        "type_nick",
+        "type_dent",
+        "type_crack",
+        "type_fod",
+        "type_erosion",
+        "type_scratch",
+        "type_gouge",
+        "type_unknown",
+        "label_serviceable"
+      ]
+    }
+  }
+}
