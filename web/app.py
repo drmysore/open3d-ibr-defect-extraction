@@ -302,7 +302,7 @@ async def api_pipeline_status():
 @app.get("/batch-jobs", response_class=HTMLResponse)
 async def batch_jobs_page(request: Request):
     """Batch job monitoring and submission UI."""
-    return templates.TemplateResponse("batch_jobs.html", {"request": request})
+    return _render(request, "batch_jobs.html")
 
 
 def _get_batch_manager():
