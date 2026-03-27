@@ -378,7 +378,8 @@
     try {
       const res = await fetch('/api/pipeline/jobs');
       if (!res.ok) throw new Error('Failed to load jobs');
-      const jobs = await res.json();
+      const data = await res.json();
+      const jobs = data.jobs || data || [];
       renderSummary(jobs);
       renderJobCards(jobs);
       managePoll(jobs);
