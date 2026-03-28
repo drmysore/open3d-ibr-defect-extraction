@@ -140,14 +140,14 @@
   .zone-map-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .zone-map-header h2 { font-size: 14px; font-weight: 700; }
   .zone-map-body { display: grid; grid-template-columns: 1fr 320px; gap: 0; }
-  .zone-svg-wrap { padding: 24px; display: flex; align-items: center; justify-content: center; min-height: 420px; }
+  .zone-svg-wrap { padding: 24px; display: flex; align-items: center; justify-content: center; min-height: 560px; }
   .zone-svg-wrap svg { max-width: 100%; height: auto; }
   .zone-svg-wrap svg .zone-region { cursor: pointer; stroke: var(--border); stroke-width: 1; transition: all .2s; }
   .zone-svg-wrap svg .zone-region:hover { stroke-width: 2; filter: brightness(1.3); }
   .zone-svg-wrap svg .zone-region.zone-selected { stroke: #fff; stroke-width: 2.5; }
   .zone-svg-wrap svg .zone-label { font-size: 9px; fill: var(--text); pointer-events: none; font-weight: 600; font-family: 'Segoe UI', system-ui, sans-serif; }
   .zone-svg-wrap svg .zone-count { font-size: 11px; fill: #fff; pointer-events: none; font-weight: 700; font-family: 'Segoe UI', system-ui, sans-serif; }
-  .zone-detail-panel { padding: 20px; border-left: 1px solid var(--border); max-height: 420px; overflow-y: auto; }
+  .zone-detail-panel { padding: 20px; border-left: 1px solid var(--border); max-height: 560px; overflow-y: auto; }
   .zone-detail-panel h3 { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
   .zone-detail-panel .zd-zone-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
   .zone-detail-panel .zd-severity { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
@@ -516,21 +516,19 @@ function buildZoneMap(zoneData) {
   var wrap = document.getElementById('zone-svg-wrap');
   if (!wrap) return;
   var counts = getZoneCounts(zoneData);
+  var sel = activeZone;
 
-  var svg = '<svg viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg" style="font-family:Segoe UI,system-ui,sans-serif">';
+  var svg = '<svg viewBox="0 0 500 700" xmlns="http://www.w3.org/2000/svg" style="font-family:Segoe UI,system-ui,sans-serif">';
 
   svg += '<defs>';
   svg += '<linearGradient id="bladeBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0d1321"/><stop offset="100%" stop-color="#151d30"/></linearGradient>';
+  svg += '<clipPath id="bladeClip"><path d="M80,60 Q78,55 100,55 L400,55 Q422,55 420,60 L380,590 Q375,600 360,600 L140,600 Q125,600 120,590 Q95,400 80,60 Z"/></clipPath>';
   svg += '</defs>';
-  svg += '<rect width="700" height="500" fill="url(#bladeBg)" rx="8"/>';
 
-  svg += '<text x="350" y="22" text-anchor="middle" fill="#8892a4" font-size="10" font-weight="600" letter-spacing="1.5" text-transform="uppercase">BLADE CROSS-SECTION — P&amp;W ZONE MAP</text>';
-  svg += '<text x="60" y="248" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="600">LEADING</text>';
-  svg += '<text x="60" y="260" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="600">EDGE</text>';
-  svg += '<text x="640" y="248" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="600">TRAILING</text>';
-  svg += '<text x="640" y="260" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="600">EDGE</text>';
+  svg += '<rect width="500" height="700" fill="url(#bladeBg)" rx="8"/>';
+  svg += '<text x="250" y="25" text-anchor="middle" fill="#8892a4" font-size="10" font-weight="600" letter-spacing="1.5">P&amp;W BLADE ZONE MAP — PWF135</text>';
 
-  var sel = activeZone;
+  svg += '<path d="M80,60 Q78,55 100,55 L400,55 Q422,55 420,60 L380,590 Q375,600 360,600 L140,600 Q125,600 120,590 Q95,400 80,60 Z" fill="none" stroke="#4a5a7a" stroke-width="1.5"/>';
 
   function zoneRect(id, x, y, w, h) {
     var c = counts[id] || 0;
@@ -539,70 +537,153 @@ function buildZoneMap(zoneData) {
     var stroke = sel === id ? '#fff' : sevStroke(def.severity);
     var sw = sel === id ? 2.5 : 1;
     var cls = 'zone-region' + (sel === id ? ' zone-selected' : '');
-    svg += '<rect class="' + cls + '" data-zone="' + id + '" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="3" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" onclick="selectZone(\'' + id + '\')"/>';
+    svg += '<rect class="' + cls + '" data-zone="' + id + '" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" onclick="selectZone(\'' + id + '\')"/>';
     svg += '<text class="zone-label" x="' + (x + w/2) + '" y="' + (y + h/2 - 4) + '" text-anchor="middle" dominant-baseline="middle">' + id + '</text>';
-    if (c > 0) svg += '<text class="zone-count" x="' + (x + w/2) + '" y="' + (y + h/2 + 8) + '" text-anchor="middle" dominant-baseline="middle">' + c + '</text>';
+    if (c > 0) svg += '<text class="zone-count" x="' + (x + w/2) + '" y="' + (y + h/2 + 9) + '" text-anchor="middle" dominant-baseline="middle">' + c + '</text>';
   }
 
-  function zonePath(id, path, cx, cy) {
+  function zonePoly(id, points, cx, cy) {
     var c = counts[id] || 0;
     var def = ZONE_DEFS[id];
     var fill = zoneColor(c);
     var stroke = sel === id ? '#fff' : sevStroke(def.severity);
     var sw = sel === id ? 2.5 : 1;
     var cls = 'zone-region' + (sel === id ? ' zone-selected' : '');
-    svg += '<path class="' + cls + '" data-zone="' + id + '" d="' + path + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" onclick="selectZone(\'' + id + '\')"/>';
+    svg += '<polygon class="' + cls + '" data-zone="' + id + '" points="' + points + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" onclick="selectZone(\'' + id + '\')"/>';
     svg += '<text class="zone-label" x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" dominant-baseline="middle">' + id + '</text>';
-    if (c > 0) svg += '<text class="zone-count" x="' + cx + '" y="' + (cy + 8) + '" text-anchor="middle" dominant-baseline="middle">' + c + '</text>';
+    if (c > 0) svg += '<text class="zone-count" x="' + cx + '" y="' + (cy + 9) + '" text-anchor="middle" dominant-baseline="middle">' + c + '</text>';
   }
 
-  // Airfoil outline (decorative, behind zones)
-  svg += '<path d="M100,250 Q90,200 120,140 Q150,80 220,55 L550,55 Q600,55 620,80 Q650,120 640,250 Q650,380 620,420 Q600,445 550,445 L220,445 Q150,420 120,360 Q90,300 100,250 Z" fill="none" stroke="#2a3654" stroke-width="0.5" stroke-dasharray="4,4"/>';
+  function zonePath(id, d, cx, cy) {
+    var c = counts[id] || 0;
+    var def = ZONE_DEFS[id];
+    var fill = zoneColor(c);
+    var stroke = sel === id ? '#fff' : sevStroke(def.severity);
+    var sw = sel === id ? 2.5 : 1;
+    var cls = 'zone-region' + (sel === id ? ' zone-selected' : '');
+    svg += '<path class="' + cls + '" data-zone="' + id + '" d="' + d + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" onclick="selectZone(\'' + id + '\')"/>';
+    svg += '<text class="zone-label" x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" dominant-baseline="middle">' + id + '</text>';
+    if (c > 0) svg += '<text class="zone-count" x="' + cx + '" y="' + (cy + 9) + '" text-anchor="middle" dominant-baseline="middle">' + c + '</text>';
+  }
 
-  // Leading Edge — A1 (inner/bottom), A2 (mid), A3 (outer/top) — thin strips along left
-  zonePath('A3', 'M105,100 Q95,160 92,210 L110,210 L125,160 Q130,130 128,100 Z', 112, 155);
-  zonePath('A2', 'M92,210 Q90,245 92,290 L110,290 L110,210 Z', 101, 250);
-  zonePath('A1', 'M92,290 Q95,340 105,400 L128,400 Q130,370 125,340 L110,290 Z', 112, 345);
+  var tipY = 60;
+  var tipHB = 30;
+  var bodyTop = tipY + tipHB;
+  var bodyBot = 570;
+  var bodyH = bodyBot - bodyTop;
+  var rowH = bodyH / 3;
 
-  // Trailing Edge — B1 (inner/bottom), B2 (mid), B3 (outer/top) — thin strips along right
-  zonePath('B3', 'M575,100 Q580,130 582,160 L600,210 Q608,160 605,100 Z', 590, 155);
-  zonePath('B2', 'M600,210 L600,290 Q608,290 608,250 Q608,210 600,210 Z', 604, 250);
-  zonePath('B1', 'M600,290 L582,340 Q580,370 575,400 L605,400 Q608,340 600,290 Z', 590, 345);
+  var filletY = 575;
+  var filletH = 25;
+  var platY = filletY + filletH + 2;
+  var platH = 24;
 
-  // Convex surface (center-left) — C1..C4 stacked top to bottom
-  zoneRect('C4', 135, 65, 190, 90);
-  zoneRect('C3', 135, 160, 190, 85);
-  zoneRect('C2', 135, 250, 190, 85);
-  zoneRect('C1', 135, 340, 190, 90);
+  var leW = 25;
 
-  // Concave surface (center-right) — D1..D4 stacked top to bottom
-  zoneRect('D4', 370, 65, 190, 90);
-  zoneRect('D3', 370, 160, 190, 85);
-  zoneRect('D2', 370, 250, 190, 85);
-  zoneRect('D1', 370, 340, 190, 90);
+  function leX(y) { return 80 + (120 - 80) * ((y - tipY) / (bodyBot - tipY)); }
+  function teX(y) { return 420 - (420 - 380) * ((y - tipY) / (bodyBot - tipY)); }
 
-  // Divider line between convex and concave
-  svg += '<line x1="340" y1="60" x2="340" y2="440" stroke="#2a3654" stroke-width="1" stroke-dasharray="3,3"/>';
-  svg += '<text x="340" y="50" text-anchor="middle" fill="#8892a4" font-size="8" font-weight="600">CONVEX ← | → CONCAVE</text>';
+  zonePoly('G1',
+    (leX(tipY)) + ',' + tipY + ' ' + (leX(tipY) + 60) + ',' + tipY + ' ' + (leX(tipY + tipHB) + 60) + ',' + (tipY + tipHB) + ' ' + (leX(tipY + tipHB)) + ',' + (tipY + tipHB),
+    leX(tipY) + 30, tipY + tipHB/2);
 
-  // Tip area — H center, G1 left, G2 right
-  zoneRect('G1', 135, 35, 80, 26);
-  zoneRect('H',  255, 35, 190, 26);
-  zoneRect('G2', 485, 35, 80, 26);
+  var hL = leX(tipY) + 60;
+  var hR = teX(tipY) - 60;
+  var hLb = leX(tipY + tipHB) + 60;
+  var hRb = teX(tipY + tipHB) - 60;
+  zonePoly('H',
+    hL + ',' + tipY + ' ' + hR + ',' + tipY + ' ' + hRb + ',' + (tipY + tipHB) + ' ' + hLb + ',' + (tipY + tipHB),
+    (hL + hR)/2, tipY + tipHB/2);
 
-  // Fillet areas — E1, E2a-d, E3 along bottom
-  zoneRect('E1', 135, 435, 70, 28);
-  zoneRect('E2a', 210, 435, 75, 28);
-  zoneRect('E2b', 290, 435, 75, 28);
-  zoneRect('E2c', 370, 435, 75, 28);
-  zoneRect('E2d', 450, 435, 75, 28);
-  zoneRect('E3', 530, 435, 70, 28);
+  zonePoly('G2',
+    (teX(tipY) - 60) + ',' + tipY + ' ' + teX(tipY) + ',' + tipY + ' ' + teX(tipY + tipHB) + ',' + (tipY + tipHB) + ' ' + (teX(tipY + tipHB) - 60) + ',' + (tipY + tipHB),
+    teX(tipY) - 30, tipY + tipHB/2);
 
-  // Platform — J — full width at very bottom
-  zoneRect('J', 135, 468, 465, 26);
+  var aY = [bodyTop, bodyTop + rowH, bodyTop + 2*rowH, bodyBot];
+  zonePath('A3',
+    'M' + leX(aY[0]) + ',' + aY[0] + ' Q' + (leX((aY[0]+aY[1])/2) - 6) + ',' + ((aY[0]+aY[1])/2) + ' ' + leX(aY[1]) + ',' + aY[1] +
+    ' L' + (leX(aY[1]) + leW) + ',' + aY[1] + ' L' + (leX(aY[0]) + leW) + ',' + aY[0] + ' Z',
+    leX((aY[0]+aY[1])/2) + leW/2 - 3, (aY[0]+aY[1])/2);
+  zonePath('A2',
+    'M' + leX(aY[1]) + ',' + aY[1] + ' Q' + (leX((aY[1]+aY[2])/2) - 5) + ',' + ((aY[1]+aY[2])/2) + ' ' + leX(aY[2]) + ',' + aY[2] +
+    ' L' + (leX(aY[2]) + leW) + ',' + aY[2] + ' L' + (leX(aY[1]) + leW) + ',' + aY[1] + ' Z',
+    leX((aY[1]+aY[2])/2) + leW/2 - 2, (aY[1]+aY[2])/2);
+  zonePath('A1',
+    'M' + leX(aY[2]) + ',' + aY[2] + ' Q' + (leX((aY[2]+aY[3])/2) - 4) + ',' + ((aY[2]+aY[3])/2) + ' ' + leX(aY[3]) + ',' + aY[3] +
+    ' L' + (leX(aY[3]) + leW) + ',' + aY[3] + ' L' + (leX(aY[2]) + leW) + ',' + aY[2] + ' Z',
+    leX((aY[2]+aY[3])/2) + leW/2 - 2, (aY[2]+aY[3])/2);
 
-  // Legend
-  svg += '<g transform="translate(15,460)">';
+  zonePoly('B3',
+    (teX(aY[0]) - leW) + ',' + aY[0] + ' ' + teX(aY[0]) + ',' + aY[0] + ' ' + teX(aY[1]) + ',' + aY[1] + ' ' + (teX(aY[1]) - leW) + ',' + aY[1],
+    teX((aY[0]+aY[1])/2) - leW/2, (aY[0]+aY[1])/2);
+  zonePoly('B2',
+    (teX(aY[1]) - leW) + ',' + aY[1] + ' ' + teX(aY[1]) + ',' + aY[1] + ' ' + teX(aY[2]) + ',' + aY[2] + ' ' + (teX(aY[2]) - leW) + ',' + aY[2],
+    teX((aY[1]+aY[2])/2) - leW/2, (aY[1]+aY[2])/2);
+  zonePoly('B1',
+    (teX(aY[2]) - leW) + ',' + aY[2] + ' ' + teX(aY[2]) + ',' + aY[2] + ' ' + teX(aY[3]) + ',' + aY[3] + ' ' + (teX(aY[3]) - leW) + ',' + aY[3],
+    teX((aY[2]+aY[3])/2) - leW/2, (aY[2]+aY[3])/2);
+
+  var cRows = 4;
+  var cRowH = bodyH / cRows;
+  for (var ri = 0; ri < cRows; ri++) {
+    var ry1 = bodyTop + ri * cRowH;
+    var ry2 = bodyTop + (ri + 1) * cRowH;
+    var cxL = leX(ry1) + leW + 2;
+    var cxR = (leX(ry1) + teX(ry1)) / 2 - 1;
+    var cxLb = leX(ry2) + leW + 2;
+    var cxRb = (leX(ry2) + teX(ry2)) / 2 - 1;
+    var cId = 'C' + (4 - ri);
+    zonePoly(cId,
+      cxL + ',' + ry1 + ' ' + cxR + ',' + ry1 + ' ' + cxRb + ',' + ry2 + ' ' + cxLb + ',' + ry2,
+      (cxL + cxR + cxLb + cxRb) / 4, (ry1 + ry2) / 2);
+
+    var dxL = (leX(ry1) + teX(ry1)) / 2 + 1;
+    var dxR = teX(ry1) - leW - 2;
+    var dxLb = (leX(ry2) + teX(ry2)) / 2 + 1;
+    var dxRb = teX(ry2) - leW - 2;
+    var dId = 'D' + (4 - ri);
+    zonePoly(dId,
+      dxL + ',' + ry1 + ' ' + dxR + ',' + ry1 + ' ' + dxRb + ',' + ry2 + ' ' + dxLb + ',' + ry2,
+      (dxL + dxR + dxLb + dxRb) / 4, (ry1 + ry2) / 2);
+  }
+
+  var midTopX = (leX(bodyTop) + teX(bodyTop)) / 2;
+  var midBotX = (leX(bodyBot) + teX(bodyBot)) / 2;
+  svg += '<line x1="' + midTopX + '" y1="' + bodyTop + '" x2="' + midBotX + '" y2="' + bodyBot + '" stroke="#4a5a7a" stroke-width="1" stroke-dasharray="4,3"/>';
+  svg += '<text x="' + (midTopX - 30) + '" y="' + (bodyTop + 14) + '" fill="#8892a4" font-size="7" font-weight="600">CONVEX</text>';
+  svg += '<text x="' + (midTopX + 8) + '" y="' + (bodyTop + 14) + '" fill="#8892a4" font-size="7" font-weight="600">CONCAVE</text>';
+
+  var fL = leX(filletY);
+  var fR = teX(filletY);
+  var fW = (fR - fL);
+  var eW1 = fW * 0.15;
+  var eMidW = (fW - 2 * eW1) / 4;
+
+  zoneRect('E1', fL, filletY, eW1, filletH);
+  zoneRect('E2a', fL + eW1 + 1, filletY, eMidW - 1, filletH);
+  zoneRect('E2b', fL + eW1 + eMidW + 1, filletY, eMidW - 1, filletH);
+  zoneRect('E2c', fL + eW1 + 2*eMidW + 1, filletY, eMidW - 1, filletH);
+  zoneRect('E2d', fL + eW1 + 3*eMidW + 1, filletY, eMidW - 1, filletH);
+  zoneRect('E3', fR - eW1, filletY, eW1, filletH);
+
+  var pL = leX(platY + platH/2);
+  var pR = teX(platY + platH/2);
+  zoneRect('J', pL, platY, pR - pL, platH);
+
+  svg += '<text x="40" y="350" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="700" transform="rotate(-90 40 350)">LEADING EDGE</text>';
+  svg += '<text x="462" y="350" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="700" transform="rotate(90 462 350)">TRAILING EDGE</text>';
+
+  svg += '<line x1="' + leX(tipY) + '" y1="42" x2="' + teX(tipY) + '" y2="42" stroke="#6b7a94" stroke-width="0.8"/>';
+  svg += '<line x1="' + leX(tipY) + '" y1="38" x2="' + leX(tipY) + '" y2="46" stroke="#6b7a94" stroke-width="0.8"/>';
+  svg += '<line x1="' + teX(tipY) + '" y1="38" x2="' + teX(tipY) + '" y2="46" stroke="#6b7a94" stroke-width="0.8"/>';
+  svg += '<text x="250" y="40" text-anchor="middle" fill="#a0aec0" font-size="8" font-weight="600">79.1 mm</text>';
+
+  svg += '<line x1="440" y1="' + tipY + '" x2="440" y2="' + bodyBot + '" stroke="#6b7a94" stroke-width="0.8"/>';
+  svg += '<line x1="436" y1="' + tipY + '" x2="444" y2="' + tipY + '" stroke="#6b7a94" stroke-width="0.8"/>';
+  svg += '<line x1="436" y1="' + bodyBot + '" x2="444" y2="' + bodyBot + '" stroke="#6b7a94" stroke-width="0.8"/>';
+  svg += '<text x="452" y="' + ((tipY + bodyBot)/2) + '" text-anchor="start" fill="#a0aec0" font-size="8" font-weight="600" transform="rotate(90 452 ' + ((tipY + bodyBot)/2) + ')">138.6 mm</text>';
+
+  svg += '<g transform="translate(15,670)">';
   svg += '<rect x="0" y="0" width="8" height="8" rx="2" fill="#1a2338" stroke="#2a3654" stroke-width="0.5"/><text x="12" y="8" fill="#8892a4" font-size="8">0</text>';
   svg += '<rect x="30" y="0" width="8" height="8" rx="2" fill="#22c55e30" stroke="#22c55e" stroke-width="0.5"/><text x="42" y="8" fill="#8892a4" font-size="8">1-2</text>';
   svg += '<rect x="65" y="0" width="8" height="8" rx="2" fill="#f59e0b40" stroke="#f59e0b" stroke-width="0.5"/><text x="77" y="8" fill="#8892a4" font-size="8">3-5</text>';
