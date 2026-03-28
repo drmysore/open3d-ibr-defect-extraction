@@ -536,10 +536,11 @@
       </div>
     `;
 
-    const tp = ml.confusion_matrix ? ml.confusion_matrix.tp : (ml.tp || 0);
-    const tn = ml.confusion_matrix ? ml.confusion_matrix.tn : (ml.tn || 0);
-    const fp = ml.confusion_matrix ? ml.confusion_matrix.fp : (ml.fp || 0);
-    const fn = ml.confusion_matrix ? ml.confusion_matrix.fn : (ml.fn || 0);
+    const cm = ml.confusion_matrix || {};
+    const tp = cm.TP || cm.tp || ml.TP || ml.tp || 0;
+    const tn = cm.TN || cm.tn || ml.TN || ml.tn || 0;
+    const fp = cm.FP || cm.fp || ml.FP || ml.fp || 0;
+    const fn = cm.FN || cm.fn || ml.FN || ml.fn || 0;
 
     Plotly.newPlot('confusionMatrix', [{
       z: [[tp, fp], [fn, tn]],
