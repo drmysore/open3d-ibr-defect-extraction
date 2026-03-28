@@ -241,7 +241,7 @@
 <script>
 const PLOT = { bg: '#1a2338', paper: '#131a2b', grid: '#2a3654', font: '#8892a4', accent: '#3b82f6' };
 const TYPE_COLORS = { nick: '#8b5cf6', nicks: '#8b5cf6', dent: '#f59e0b', dents: '#f59e0b', scratch: '#3b82f6', scratches: '#3b82f6', fod: '#ef4444', erosion: '#22c55e', crack: '#ec4899', cracks: '#ec4899', gouge: '#f97316', gouges: '#f97316' };
-const TYPE_ICONS = { nick: '🔹', nicks: '🔹', dent: '🔶', dents: '🔶', scratch: '🔷', scratches: '🔷', fod: '🔴', erosion: '🟢', crack: '🩷', cracks: '🩷', gouge: '🟠', gouges: '🟠' };
+const TYPE_ICONS = { nick: 'N', nicks: 'N', dent: 'D', dents: 'D', scratch: 'S', scratches: 'S', fod: 'F', erosion: 'E', crack: 'C', cracks: 'C', gouge: 'G', gouges: 'G' };
 const CATEGORY_MAP = { nick: 'Nicks', nicks: 'Nicks', dent: 'Dents', dents: 'Dents', scratch: 'Scratches', scratches: 'Scratches', crack: 'Other', cracks: 'Other', fod: 'Other', erosion: 'Other', gouge: 'Other', gouges: 'Other' };
 const RADAR_AXES = ['Nicks', 'Scratches', 'Dents', 'Cracks', 'FOD', 'Erosion', 'Gouge'];
 
@@ -327,10 +327,10 @@ function renderDetectCards(defects) {
   });
 
   const cards = [
-    { key: 'Nicks', icon: '🔹', color: '#8b5cf6', label: 'Nicks Detection' },
-    { key: 'Dents', icon: '🔶', color: '#f59e0b', label: 'Dents Detection' },
-    { key: 'Scratches', icon: '🔷', color: '#3b82f6', label: 'Scratches Detection' },
-    { key: 'Other', icon: '⚡', color: '#ef4444', label: 'Other Detection' },
+    { key: 'Nicks', icon: 'N', color: '#8b5cf6', label: 'Nicks Detection' },
+    { key: 'Dents', icon: 'D', color: '#f59e0b', label: 'Dents Detection' },
+    { key: 'Scratches', icon: 'S', color: '#3b82f6', label: 'Scratches Detection' },
+    { key: 'Other', icon: 'X', color: '#ef4444', label: 'Other Detection' },
   ];
 
   document.getElementById('detect-grid').innerHTML = cards.map(function(c) {
