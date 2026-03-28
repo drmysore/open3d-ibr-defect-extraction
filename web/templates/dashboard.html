@@ -116,7 +116,7 @@
     <a href="/gallery">Gallery</a>
     <a href="/maintenance">Maintenance</a>
     <a href="/quality-audits">Audits</a>
-    <a href="/batch-jobs">Batch</a>
+    <a href="/defect-library">Defect Library</a>
   </nav>
 </div>
 
@@ -186,15 +186,16 @@
       <div class="stats-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom:16px;">
         <div class="stat-card">
           <div class="label">Accuracy</div>
-          <div class="value" id="sprint4-accuracy">{{ "%.2f"|format((report.sprint4.ml_metrics.get("ensemble") or {}).get("accuracy", 0) * 100) }}%</div>
+          {% set _ml = report.sprint4.ml_metrics.get("ensemble") or report.sprint4.ml_metrics %}
+          <div class="value" id="sprint4-accuracy">{{ "%.2f"|format((_ml.get("accuracy", 0)) * 100) }}%</div>
         </div>
         <div class="stat-card">
           <div class="label">AUC-ROC</div>
-          <div class="value" id="sprint4-auc">{{ "%.3f"|format((report.sprint4.ml_metrics.get("ensemble") or {}).get("auc_roc", 0)) }}</div>
+          <div class="value" id="sprint4-auc">{{ "%.3f"|format(_ml.get("auc_roc", 0)) }}</div>
         </div>
         <div class="stat-card">
           <div class="label">False Negative Rate</div>
-          <div class="value" id="sprint4-fnr">{{ "%.3f"|format((report.sprint4.ml_metrics.get("ensemble") or {}).get("false_negative_rate", 0)) }}</div>
+          <div class="value" id="sprint4-fnr">{{ "%.3f"|format(_ml.get("false_negative_rate", 1.0 - _ml.get("recall", 1.0))) }}</div>
         </div>
         <div class="stat-card">
           <div class="label">2D Views</div>

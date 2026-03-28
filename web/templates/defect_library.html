@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Defect Library &amp; ML — IBR Defect Extraction</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e17; --surface: #131a2b; --surface2: #1a2338;
+    --border: #2a3654; --text: #e2e8f0; --text-muted: #8892a4;
+    --accent: #3b82f6; --green: #22c55e; --amber: #f59e0b; --red: #ef4444;
+    --purple: #8b5cf6; --cyan: #06b6d4; --pink: #ec4899; --teal: #14b8a6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 32px; display: flex; align-items: center; gap: 24px; }
+  .topbar h1 { font-size: 18px; font-weight: 700; } .topbar h1 span { color: var(--accent); }
+  .topbar nav { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+  .topbar nav a { color: var(--text-muted); font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 6px; transition: all .15s; }
+  .topbar nav a:hover, .topbar nav a.active { color: var(--text); background: var(--surface2); text-decoration: none; }
+
+  .container { max-width: 1500px; margin: 0 auto; padding: 24px 32px; }
+
+  .page-header { margin-bottom: 28px; }
+  .page-header h2 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .page-header p { color: var(--text-muted); font-size: 13px; }
+
+  .section-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-muted); margin-bottom: 14px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; margin-bottom: 28px;
+  }
+  .card-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-header h3 { font-size: 14px; font-weight: 700; }
+  .card-body { padding: 20px; }
+
+  /* Pipeline flow */
+  .pipeline-flow {
+    display: flex; gap: 0; align-items: stretch; overflow-x: auto;
+    padding: 8px 0 16px 0; position: relative;
+  }
+  .pipeline-flow::before {
+    content: ''; position: absolute; top: 50%; left: 40px; right: 40px;
+    height: 2px; background: var(--border); z-index: 0;
+    transform: translateY(-6px);
+  }
+  .phase-card {
+    flex: 1; min-width: 150px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 14px; position: relative; z-index: 1;
+    transition: all .2s; cursor: default;
+  }
+  .phase-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+  .phase-card + .phase-card { margin-left: 6px; }
+  .phase-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%; font-size: 12px; font-weight: 700;
+    background: var(--accent); color: #fff; margin-bottom: 10px;
+  }
+  .phase-card.complete .phase-num { background: var(--green); }
+  .phase-card.empty .phase-num { background: var(--border); color: var(--text-muted); }
+  .phase-name { font-size: 13px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+  .phase-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .phase-status {
+    margin-top: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; display: flex; align-items: center; gap: 5px;
+  }
+  .phase-status .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .phase-status .dot.green { background: var(--green); }
+  .phase-status .dot.amber { background: var(--amber); }
+  .phase-status .dot.gray { background: var(--text-muted); }
+
+  /* Defect type grid */
+  .defect-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .defect-type-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; position: relative; overflow: hidden; transition: all .2s;
+  }
+  .defect-type-card:hover { border-color: rgba(59,130,246,.4); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+  .defect-type-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .dt-icon {
+    width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; font-size: 20px; margin-bottom: 14px;
+  }
+  .dt-name { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .dt-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; min-height: 34px; }
+  .dt-meta { display: flex; flex-direction: column; gap: 6px; }
+  .dt-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+  .dt-row .label { color: var(--text-muted); }
+  .dt-row .val { font-weight: 700; }
+  .dt-count { font-size: 24px; font-weight: 700; margin-top: 10px; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .badge-critical { background: rgba(239,68,68,.15); color: var(--red); }
+  .badge-high { background: rgba(245,158,11,.15); color: var(--amber); }
+  .badge-standard { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge-low { background: rgba(59,130,246,.15); color: var(--accent); }
+
+  /* Zone rule matrix */
+  .matrix-wrap { overflow-x: auto; }
+  .matrix-wrap table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 900px; }
+  .matrix-wrap thead th {
+    padding: 10px 8px; text-align: center; font-size: 10px; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--text-muted); font-weight: 700;
+    border-bottom: 2px solid var(--border); position: sticky; top: 0;
+    background: var(--surface);
+  }
+  .matrix-wrap thead th:first-child { text-align: left; min-width: 200px; }
+  .matrix-wrap tbody td {
+    padding: 8px; text-align: center; border-bottom: 1px solid rgba(42,54,84,.3);
+    font-size: 11px; font-weight: 500;
+  }
+  .matrix-wrap tbody td:first-child {
+    text-align: left; font-weight: 600; color: var(--text);
+    background: rgba(19,26,43,.6); position: sticky; left: 0; z-index: 1;
+  }
+  .matrix-wrap tbody tr:hover td { background: rgba(59,130,246,.05); }
+  .matrix-cell {
+    display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 10px;
+    font-weight: 700; min-width: 48px;
+  }
+  .mc-critical { background: rgba(239,68,68,.12); color: var(--red); }
+  .mc-high { background: rgba(245,158,11,.12); color: var(--amber); }
+  .mc-standard { background: rgba(34,197,94,.12); color: var(--green); }
+  .mc-na { background: rgba(136,146,164,.08); color: var(--text-muted); font-style: italic; }
+  .zone-severity { font-size: 9px; display: block; color: var(--text-muted); margin-top: 2px; }
+
+  /* ML performance */
+  .ml-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .ml-stat {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 20px; text-align: center; position: relative; overflow: hidden;
+  }
+  .ml-stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .ml-stat.s-blue::before { background: var(--accent); }
+  .ml-stat.s-green::before { background: var(--green); }
+  .ml-stat.s-amber::before { background: var(--amber); }
+  .ml-stat.s-purple::before { background: var(--purple); }
+  .ml-stat .ms-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; font-weight: 700; }
+  .ml-stat .ms-value { font-size: 30px; font-weight: 700; }
+  .ml-stat .ms-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .ml-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .ml-chart-box { background: var(--surface2); border-radius: 10px; padding: 20px; min-height: 320px; }
+  .ml-chart-box h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin-bottom: 12px; font-weight: 700; }
+  .model-name-bar {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+    padding: 12px 18px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .model-name-bar .mn-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; }
+  .model-name-bar .mn-value { font-size: 15px; font-weight: 700; color: var(--accent); }
+  .model-name-bar .mn-sep { color: var(--border); }
+
+  /* Classification flow */
+  .flow-diagram {
+    display: flex; align-items: center; gap: 0; overflow-x: auto;
+    padding: 16px 0;
+  }
+  .flow-step {
+    flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 18px; min-width: 140px; text-align: center;
+    transition: all .2s;
+  }
+  .flow-step:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+  .flow-step .fs-icon { font-size: 22px; margin-bottom: 8px; }
+  .flow-step .fs-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+  .flow-step .fs-desc { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+  .flow-arrow {
+    flex-shrink: 0; width: 36px; display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: 18px; font-weight: 700;
+  }
+
+  .loading-msg { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
+
+  @media (max-width: 1100px) {
+    .defect-grid { grid-template-columns: repeat(2, 1fr); }
+    .ml-stats { grid-template-columns: repeat(2, 1fr); }
+    .ml-charts { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
+    .defect-grid { grid-template-columns: 1fr; }
+    .ml-stats { grid-template-columns: 1fr; }
+    .container { padding: 16px; }
+    .pipeline-flow { flex-direction: column; }
+    .pipeline-flow::before { display: none; }
+    .phase-card + .phase-card { margin-left: 0; margin-top: 8px; }
+    .flow-diagram { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); width: auto; height: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span>IBR</span> Defect Extraction</h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/viewer3d">3D Viewer</a>
+    <a href="/reports">Reports</a>
+    <a href="/phase-viewer">Phase Viewer</a>
+    <a href="/inferno-viewer">Inferno 3D</a>
+    <a href="/comparison">Compare</a>
+    <a href="/gallery">Gallery</a>
+    <a href="/maintenance">Maintenance</a>
+    <a href="/quality-audits">Audits</a>
+    <a href="/batch-jobs">Batch</a>
+    <a href="/defect-library" class="active">Defect Library</a>
+  </nav>
+</div>
+
+<div class="container">
+
+  <div class="page-header">
+    <h2>Defect Library &amp; ML Algorithm</h2>
+    <p>Detection pipeline, defect classification rules, zone rule matrix, and ML model performance for IBR inspection.</p>
+  </div>
+
+  <!-- ==================== SECTION 1: Pipeline Flow ==================== -->
+  <div class="section-label">8-Phase Detection Pipeline</div>
+  <div class="card">
+    <div class="card-body">
+      <div class="pipeline-flow" id="pipelineFlow">
+        <div class="loading-msg">Loading pipeline status&hellip;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 2: Defect Type Library ==================== -->
+  <div class="section-label">Defect Type Library</div>
+  <div class="defect-grid" id="defectGrid">
+    <div class="loading-msg" style="grid-column:1/-1;">Loading defect types&hellip;</div>
+  </div>
+
+  <!-- ==================== SECTION 3: Zone Rule Matrix ==================== -->
+  <div class="section-label">Zone Rule Matrix</div>
+  <div class="card">
+    <div class="card-header">
+      <h3>Serviceable Limits by Zone &amp; Defect Type</h3>
+      <span style="font-size:11px;color:var(--text-muted);">Source: ibr_rules.json &amp; pipeline_config.yaml</span>
+    </div>
+    <div class="card-body">
+      <div class="matrix-wrap" id="zoneMatrix">
+        <div class="loading-msg">Loading zone rules&hellip;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 4: ML Model Performance ==================== -->
+  <div class="section-label">ML Model Performance</div>
+  <div class="card">
+    <div class="card-body">
+      <div id="mlModelBar" class="model-name-bar" style="display:none;">
+        <span class="mn-label">Model</span>
+        <span class="mn-sep">|</span>
+        <span class="mn-value" id="mlModelName">—</span>
+      </div>
+      <div class="ml-stats" id="mlStats">
+        <div class="loading-msg" style="grid-column:1/-1;">Loading ML metrics&hellip;</div>
+      </div>
+      <div class="ml-charts">
+        <div class="ml-chart-box">
+          <h4>Confusion Matrix</h4>
+          <div id="confusionMatrix" style="width:100%;min-height:280px;"></div>
+        </div>
+        <div class="ml-chart-box">
+          <h4>ML Confidence Distribution</h4>
+          <div id="confidenceHist" style="width:100%;min-height:280px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 5: Classification Flow ==================== -->
+  <div class="section-label">Defect Classification Flow</div>
+  <div class="card">
+    <div class="card-body">
+      <div class="flow-diagram" id="classificationFlow"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const DEFECT_TYPES = [
+    { key: 'nick',    name: 'Nick',       icon: '⚡', color: '#ef4444', desc: 'Small material displacement from impact, typically V-shaped indentation on edges.',                   zones: 'A1-A3, B1-B3, G1-G2', severity: 'CRITICAL' },
+    { key: 'dent',    name: 'Dent',       icon: '🔴', color: '#f59e0b', desc: 'Rounded depression from blunt force impact, no material removal.',                                     zones: 'A1-A3, B1-B3, C1-C4, D1-D4', severity: 'HIGH' },
+    { key: 'scratch', name: 'Scratch',    icon: '✏️', color: '#8b5cf6', desc: 'Linear surface damage from abrasive contact. May not be repairable on leading edges.',                 zones: 'A2, C1-C4, D1-D4', severity: 'HIGH' },
+    { key: 'crack',   name: 'Crack',      icon: '⚠️', color: '#dc2626', desc: 'Fracture propagation through material. Always requires replacement — non-repairable.',                 zones: 'All zones', severity: 'CRITICAL' },
+    { key: 'fod',     name: 'FOD',        icon: '💥', color: '#ec4899', desc: 'Foreign Object Damage — material loss or deformation from ingested debris.',                            zones: 'A1-A3, B1-B3, H', severity: 'CRITICAL' },
+    { key: 'erosion', name: 'Erosion',    icon: '🌊', color: '#06b6d4', desc: 'Progressive material loss from particulate or fluid flow across the surface.',                          zones: 'A1-A3, G1-G2, H', severity: 'HIGH' },
+    { key: 'gouge',   name: 'Gouge',      icon: '🔧', color: '#f97316', desc: 'Deep material removal with defined edges, typically from handling or tool contact.',                    zones: 'C1-C4, D1-D4, J', severity: 'HIGH' },
+    { key: 'curled_tip', name: 'Curled Tip', icon: '↩️', color: '#14b8a6', desc: 'Deformation of the airfoil tip from impact or thermal distortion.',                                   zones: 'G1-G2, H', severity: 'CRITICAL' },
+  ];
+
+  const PHASES = [
+    { num: 1, name: 'Data Prep',           desc: 'Load PLY, downsample, remove outliers, estimate normals.',        reportKey: 'scan_file' },
+    { num: 2, name: 'Registration',         desc: 'Align scan to CAD via FPFH + RANSAC → ICP refinement.',          reportKey: 'registration' },
+    { num: 3, name: 'Deviation Analysis',   desc: 'Compute signed point-to-mesh deviations. Threshold filtering.',  reportKey: 'deviation_threshold_mm' },
+    { num: 4, name: 'Foil Segmentation',    desc: 'Separate individual airfoils via angular DBSCAN clustering.',     reportKey: 'foil_count' },
+    { num: 5, name: 'Defect Clustering',    desc: 'DBSCAN on deviation points to form defect clusters.',            reportKey: 'total_defects' },
+    { num: 6, name: 'Measurement',          desc: 'PCA/OBB bounding — depth, length, width, edge distance.',        reportKey: 'defects' },
+    { num: 7, name: 'Zone Classification',  desc: 'Assign zones (A1–J) and apply P&W rule-based disposition.',      reportKey: 'disposition_breakdown' },
+    { num: 8, name: 'Output & ML',          desc: 'ML ensemble prediction, Excel/JSON export, visualization.',      reportKey: 'sprint4' },
+  ];
+
+  const FLOW_STEPS = [
+    { icon: '📐', name: '3D Point Cloud',      desc: 'Raw scan data loaded' },
+    { icon: '📊', name: 'Deviation > Threshold', desc: 'Signed distance check' },
+    { icon: '🔬', name: 'DBSCAN Cluster',       desc: 'Group anomalous points' },
+    { icon: '📏', name: 'PCA/OBB Measure',      desc: 'Depth, length, width' },
+    { icon: '🗺️', name: 'Zone Classify',        desc: 'Assign blade zones' },
+    { icon: '📋', name: 'Apply Rules',           desc: 'P&W serviceable limits' },
+    { icon: '🤖', name: 'ML Ensemble',           desc: 'RF + GB + LR voting' },
+    { icon: '✅', name: 'Final Disposition',     desc: 'Service / Blend / Replace' },
+  ];
+
+  const ZONE_ROWS = [
+    'A1','A2','A3','B1','B2','B3',
+    'C1','C2','C3','C4','D1','D2','D3','D4',
+    'E1','E2a','E2b','E2c','E2d','E3',
+    'G1','G2','H','J'
+  ];
+
+  const ZONE_META = {
+    A1:  { name: 'LE Inner Half',        severity: 'CRITICAL' },
+    A2:  { name: 'LE Mid',               severity: 'CRITICAL' },
+    A3:  { name: 'LE Outer',             severity: 'CRITICAL' },
+    B1:  { name: 'TE Inner',             severity: 'CRITICAL' },
+    B2:  { name: 'TE Mid',               severity: 'CRITICAL' },
+    B3:  { name: 'TE Outer',             severity: 'CRITICAL' },
+    C1:  { name: 'Convex Inner',         severity: 'STANDARD' },
+    C2:  { name: 'Convex Mid-Inner',     severity: 'STANDARD' },
+    C3:  { name: 'Convex Mid-Outer',     severity: 'STANDARD' },
+    C4:  { name: 'Convex Outer',         severity: 'STANDARD' },
+    D1:  { name: 'Concave Inner',        severity: 'STANDARD' },
+    D2:  { name: 'Concave Mid-Inner',    severity: 'STANDARD' },
+    D3:  { name: 'Concave Mid-Outer',    severity: 'STANDARD' },
+    D4:  { name: 'Concave Outer',        severity: 'STANDARD' },
+    E1:  { name: 'ID Fillet Radius',     severity: 'HIGH' },
+    E2a: { name: 'Fillet Radius (a)',    severity: 'HIGH' },
+    E2b: { name: 'Fillet Radius (b)',    severity: 'HIGH' },
+    E2c: { name: 'Fillet Radius (c)',    severity: 'HIGH' },
+    E2d: { name: 'Fillet Radius (d)',    severity: 'HIGH' },
+    E3:  { name: 'TE ID Fillet',         severity: 'HIGH' },
+    G1:  { name: 'LE Tip Corner',        severity: 'CRITICAL' },
+    G2:  { name: 'TE Tip Corner',        severity: 'CRITICAL' },
+    H:   { name: 'Airfoil Tip',          severity: 'CRITICAL' },
+    J:   { name: 'Platform',             severity: 'STANDARD' },
+  };
+
+  const ZONE_DEFECT_LIMITS = {
+    A1: { nick: 0.005, dent: 0.005, scratch: 0.002, crack: 0, fod: 0.005, erosion: 0.005, gouge: null, curled_tip: null },
+    A2: { nick: 0.005, dent: 0.005, scratch: 0.002, crack: 0, fod: 0.005, erosion: 0.005, gouge: null, curled_tip: null },
+    A3: { nick: 0.005, dent: 0.005, scratch: 0.002, crack: 0, fod: 0.005, erosion: 0.005, gouge: null, curled_tip: null },
+    B1: { nick: 0.005, dent: 0.005, scratch: 0.002, crack: 0, fod: 0.005, erosion: null, gouge: null, curled_tip: null },
+    B2: { nick: 0.005, dent: 0.005, scratch: 0.002, crack: 0, fod: 0.005, erosion: null, gouge: null, curled_tip: null },
+    B3: { nick: 0.005, dent: 0.005, scratch: 0.002, crack: 0, fod: 0.005, erosion: null, gouge: null, curled_tip: null },
+    C1: { nick: null, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: 0.005, curled_tip: null },
+    C2: { nick: null, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: 0.005, curled_tip: null },
+    C3: { nick: null, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: 0.005, curled_tip: null },
+    C4: { nick: null, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: 0.005, curled_tip: null },
+    D1: { nick: null, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: 0.005, curled_tip: null },
+    D2: { nick: null, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: 0.005, curled_tip: null },
+    D3: { nick: null, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: 0.005, curled_tip: null },
+    D4: { nick: null, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: 0.005, curled_tip: null },
+    E1: { nick: 0.004, dent: 0.004, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: null, curled_tip: null },
+    E2a:{ nick: 0.004, dent: 0.004, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: null, curled_tip: null },
+    E2b:{ nick: 0.004, dent: 0.004, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: null, curled_tip: null },
+    E2c:{ nick: 0.004, dent: 0.004, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: null, curled_tip: null },
+    E2d:{ nick: 0.004, dent: 0.004, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: null, curled_tip: null },
+    E3: { nick: 0.005, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: null, curled_tip: null },
+    G1: { nick: 0.005, dent: 0.005, scratch: null, crack: 0, fod: 0.005, erosion: 0.005, gouge: null, curled_tip: 0.005 },
+    G2: { nick: 0.025, dent: 0.025, scratch: null, crack: 0, fod: 0.025, erosion: null, gouge: null, curled_tip: 0.025 },
+    H:  { nick: 0.030, dent: 0.030, scratch: null, crack: 0, fod: 0.030, erosion: 0.030, gouge: null, curled_tip: 0.030 },
+    J:  { nick: null, dent: 0.005, scratch: 0.002, crack: 0, fod: null, erosion: null, gouge: 0.005, curled_tip: null },
+  };
+
+  let reportData = null;
+  let maintenanceData = null;
+
+  async function fetchJSON(url) {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      return await r.json();
+    } catch { return null; }
+  }
+
+  /* ---- Section 1: Pipeline Flow ---- */
+  function renderPipeline(report) {
+    const el = document.getElementById('pipelineFlow');
+    el.innerHTML = '';
+    PHASES.forEach((p, i) => {
+      let status = 'empty', statusLabel = 'No Data', dotClass = 'gray';
+      if (report) {
+        const val = report[p.reportKey];
+        const hasData = val !== undefined && val !== null &&
+          (typeof val !== 'object' || (Array.isArray(val) ? val.length > 0 : Object.keys(val).length > 0));
+        if (hasData) { status = 'complete'; statusLabel = 'Data Available'; dotClass = 'green'; }
+        else { statusLabel = 'Pending'; dotClass = 'amber'; }
+      }
+      const card = document.createElement('div');
+      card.className = 'phase-card ' + status;
+      card.innerHTML = `
+        <div class="phase-num">${p.num}</div>
+        <div class="phase-name">${p.name}</div>
+        <div class="phase-desc">${p.desc}</div>
+        <div class="phase-status"><span class="dot ${dotClass}"></span> ${statusLabel}</div>
+      `;
+      el.appendChild(card);
+    });
+  }
+
+  /* ---- Section 2: Defect Type Library ---- */
+  function renderDefectGrid(defects) {
+    const counts = {};
+    (defects || []).forEach(d => {
+      const t = (d.classified_type || d.classification || 'unknown').toLowerCase().replace(/[\s-]/g, '_');
+      counts[t] = (counts[t] || 0) + 1;
+    });
+
+    const el = document.getElementById('defectGrid');
+    el.innerHTML = '';
+    DEFECT_TYPES.forEach(dt => {
+      const count = counts[dt.key] || 0;
+      const card = document.createElement('div');
+      card.className = 'defect-type-card';
+      card.style.setProperty('--dt-color', dt.color);
+      card.innerHTML = `
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${dt.color};"></div>
+        <div class="dt-icon" style="background:${dt.color}20;color:${dt.color};">${dt.icon}</div>
+        <div class="dt-name">${dt.name}</div>
+        <div class="dt-desc">${dt.desc}</div>
+        <div class="dt-meta">
+          <div class="dt-row"><span class="label">Typical Zones</span> <span class="val">${dt.zones}</span></div>
+          <div class="dt-row"><span class="label">Severity</span> <span class="badge badge-${dt.severity.toLowerCase()}">${dt.severity}</span></div>
+        </div>
+        <div class="dt-count" style="color:${dt.color};">${count} <span style="font-size:12px;color:var(--text-muted);font-weight:500;">detected</span></div>
+      `;
+      el.appendChild(card);
+    });
+  }
+
+  /* ---- Section 3: Zone Rule Matrix ---- */
+  function renderZoneMatrix() {
+    const wrap = document.getElementById('zoneMatrix');
+    const defectCols = DEFECT_TYPES.map(d => d.key);
+    const defectNames = DEFECT_TYPES.map(d => d.name);
+
+    let html = '<table><thead><tr><th>Zone</th>';
+    defectNames.forEach(n => { html += `<th>${n}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    ZONE_ROWS.forEach(zid => {
+      const zm = ZONE_META[zid] || {};
+      const sevClass = (zm.severity || 'STANDARD').toLowerCase();
+      html += `<tr><td><strong>${zid}</strong> <span class="zone-severity">${zm.name || ''}</span></td>`;
+      defectCols.forEach(dk => {
+        const limits = ZONE_DEFECT_LIMITS[zid];
+        const v = limits ? limits[dk] : null;
+        let cellClass = 'mc-na', cellText = '—';
+        if (v !== undefined && v !== null) {
+          if (v === 0) { cellClass = 'mc-critical'; cellText = 'REJECT'; }
+          else {
+            const sev = zm.severity || 'STANDARD';
+            cellClass = sev === 'CRITICAL' ? 'mc-critical' : sev === 'HIGH' ? 'mc-high' : 'mc-standard';
+            cellText = v.toFixed(3) + '"';
+          }
+        }
+        html += `<td><span class="matrix-cell ${cellClass}">${cellText}</span></td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  /* ---- Section 4: ML Model Performance ---- */
+  function renderMLPerformance(report) {
+    const s4 = report && report.sprint4 ? report.sprint4 : null;
+    const ml = s4 ? s4.ml_metrics : null;
+    const defects = report ? (report.defects || []) : [];
+
+    const statsEl = document.getElementById('mlStats');
+    const barEl = document.getElementById('mlModelBar');
+
+    if (!ml) {
+      statsEl.innerHTML = '<div class="loading-msg" style="grid-column:1/-1;">No ML metrics available. Run pipeline with ML enabled.</div>';
+      document.getElementById('confusionMatrix').innerHTML = '<div class="loading-msg">No data</div>';
+      document.getElementById('confidenceHist').innerHTML = '<div class="loading-msg">No data</div>';
+      return;
+    }
+
+    barEl.style.display = 'flex';
+    document.getElementById('mlModelName').textContent = ml.model_name || ml.model || 'Ensemble';
+
+    const precision = ml.precision != null ? ml.precision : 0;
+    const recall = ml.recall != null ? ml.recall : 0;
+    const f1 = ml.f1_score != null ? ml.f1_score : (ml.f1 || 0);
+    const auc = ml.auc_roc != null ? ml.auc_roc : (ml.auc || 0);
+
+    statsEl.innerHTML = `
+      <div class="ml-stat s-blue">
+        <div class="ms-label">Precision</div>
+        <div class="ms-value">${(precision * 100).toFixed(1)}%</div>
+        <div class="ms-sub">Positive predictive value</div>
+      </div>
+      <div class="ml-stat s-green">
+        <div class="ms-label">Recall</div>
+        <div class="ms-value">${(recall * 100).toFixed(1)}%</div>
+        <div class="ms-sub">Sensitivity / TPR</div>
+      </div>
+      <div class="ml-stat s-amber">
+        <div class="ms-label">F1 Score</div>
+        <div class="ms-value">${(f1 * 100).toFixed(1)}%</div>
+        <div class="ms-sub">Harmonic mean P &amp; R</div>
+      </div>
+      <div class="ml-stat s-purple">
+        <div class="ms-label">AUC-ROC</div>
+        <div class="ms-value">${(auc * 100).toFixed(1)}%</div>
+        <div class="ms-sub">Area under ROC curve</div>
+      </div>
+    `;
+
+    const tp = ml.confusion_matrix ? ml.confusion_matrix.tp : (ml.tp || 0);
+    const tn = ml.confusion_matrix ? ml.confusion_matrix.tn : (ml.tn || 0);
+    const fp = ml.confusion_matrix ? ml.confusion_matrix.fp : (ml.fp || 0);
+    const fn = ml.confusion_matrix ? ml.confusion_matrix.fn : (ml.fn || 0);
+
+    Plotly.newPlot('confusionMatrix', [{
+      z: [[tp, fp], [fn, tn]],
+      x: ['Predicted +', 'Predicted −'],
+      y: ['Actual +', 'Actual −'],
+      type: 'heatmap',
+      colorscale: [[0, '#131a2b'], [0.5, '#1e3a5f'], [1, '#3b82f6']],
+      text: [[`TP: ${tp}`, `FP: ${fp}`], [`FN: ${fn}`, `TN: ${tn}`]],
+      texttemplate: '%{text}',
+      textfont: { color: '#e2e8f0', size: 14 },
+      hoverinfo: 'text',
+      showscale: false,
+    }], {
+      margin: { t: 10, b: 50, l: 80, r: 20 },
+      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: '#8892a4', size: 12 },
+      xaxis: { side: 'bottom' },
+      yaxis: { autorange: 'reversed' },
+    }, { responsive: true, displayModeBar: false });
+
+    const confidences = defects
+      .map(d => d.ml_confidence)
+      .filter(c => c != null && c !== undefined);
+
+    if (confidences.length > 0) {
+      Plotly.newPlot('confidenceHist', [{
+        x: confidences,
+        type: 'histogram',
+        nbinsx: 20,
+        marker: { color: '#3b82f6', line: { color: '#1e3a5f', width: 1 } },
+        opacity: 0.85,
+      }], {
+        margin: { t: 10, b: 50, l: 60, r: 20 },
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#8892a4', size: 11 },
+        xaxis: { title: 'Confidence', gridcolor: '#1a2338', range: [0, 1] },
+        yaxis: { title: 'Count', gridcolor: '#1a2338' },
+        bargap: 0.05,
+      }, { responsive: true, displayModeBar: false });
+    } else {
+      document.getElementById('confidenceHist').innerHTML =
+        '<div class="loading-msg">No ML confidence scores in current data</div>';
+    }
+  }
+
+  /* ---- Section 5: Classification Flow ---- */
+  function renderClassificationFlow() {
+    const el = document.getElementById('classificationFlow');
+    el.innerHTML = '';
+    FLOW_STEPS.forEach((s, i) => {
+      if (i > 0) {
+        const arrow = document.createElement('div');
+        arrow.className = 'flow-arrow';
+        arrow.textContent = '→';
+        el.appendChild(arrow);
+      }
+      const step = document.createElement('div');
+      step.className = 'flow-step';
+      step.innerHTML = `
+        <div class="fs-icon">${s.icon}</div>
+        <div class="fs-name">${s.name}</div>
+        <div class="fs-desc">${s.desc}</div>
+      `;
+      el.appendChild(step);
+    });
+  }
+
+  /* ---- Init ---- */
+  async function init() {
+    renderClassificationFlow();
+    renderZoneMatrix();
+
+    const [report, maint] = await Promise.all([
+      fetchJSON('/api/report/latest'),
+      fetchJSON('/api/maintenance/data'),
+    ]);
+    reportData = report;
+    maintenanceData = maint;
+
+    renderPipeline(report);
+    renderDefectGrid(maint ? maint.defects : (report ? report.defects : []));
+    renderMLPerformance(report);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
