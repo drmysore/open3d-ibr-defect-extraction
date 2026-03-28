@@ -133,6 +133,31 @@
 
   @media (max-width: 1100px) { .stats-row { grid-template-columns: repeat(3, 1fr); } .drawer-charts { grid-template-columns: 1fr; } .drawer-stats { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 768px) { .stats-row { grid-template-columns: 1fr 1fr; } .foil-grid { grid-template-columns: 1fr; } .container { padding: 16px; } .topbar { padding: 12px 16px; } }
+
+  /* Blade Zone Map */
+  .zone-map-section { margin-bottom: 28px; }
+  .zone-map-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .zone-map-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .zone-map-header h2 { font-size: 14px; font-weight: 700; }
+  .zone-map-body { display: grid; grid-template-columns: 1fr 320px; gap: 0; }
+  .zone-svg-wrap { padding: 24px; display: flex; align-items: center; justify-content: center; min-height: 420px; }
+  .zone-svg-wrap svg { max-width: 100%; height: auto; }
+  .zone-svg-wrap svg .zone-region { cursor: pointer; stroke: var(--border); stroke-width: 1; transition: all .2s; }
+  .zone-svg-wrap svg .zone-region:hover { stroke-width: 2; filter: brightness(1.3); }
+  .zone-svg-wrap svg .zone-region.zone-selected { stroke: #fff; stroke-width: 2.5; }
+  .zone-svg-wrap svg .zone-label { font-size: 9px; fill: var(--text); pointer-events: none; font-weight: 600; font-family: 'Segoe UI', system-ui, sans-serif; }
+  .zone-svg-wrap svg .zone-count { font-size: 11px; fill: #fff; pointer-events: none; font-weight: 700; font-family: 'Segoe UI', system-ui, sans-serif; }
+  .zone-detail-panel { padding: 20px; border-left: 1px solid var(--border); max-height: 420px; overflow-y: auto; }
+  .zone-detail-panel h3 { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+  .zone-detail-panel .zd-zone-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .zone-detail-panel .zd-severity { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+  .zone-detail-panel .zd-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(42,54,84,.3); font-size: 12px; }
+  .zone-detail-panel .zd-stat .zd-label { color: var(--text-muted); }
+  .zone-detail-panel .zd-types { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .zone-detail-panel .zd-type-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--surface2); color: var(--text-muted); }
+  .zone-filter-bar { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+  .zone-filter-bar .tag { font-size: 12px; color: var(--accent); font-weight: 600; }
+  @media (max-width: 1100px) { .zone-map-body { grid-template-columns: 1fr; } .zone-detail-panel { border-left: none; border-top: 1px solid var(--border); max-height: none; } }
 </style>
 </head>
 <body>
@@ -170,6 +195,26 @@
   <div class="toggle-panel">
     <div class="toggle-panel-label">Defect Types</div>
     <div class="toggle-group" id="toggle-group"></div>
+  </div>
+
+  <!-- Blade Zone Map -->
+  <div class="zone-map-section">
+    <div class="zone-map-card">
+      <div class="zone-map-header">
+        <h2>Blade Zone Map — Defect Locations</h2>
+        <div class="zone-filter-bar" id="zone-filter-bar" style="display:none">
+          <span class="tag" id="zone-filter-tag"></span>
+          <button class="clear-btn" onclick="clearZoneFilter()">Clear</button>
+        </div>
+      </div>
+      <div class="zone-map-body">
+        <div class="zone-svg-wrap" id="zone-svg-wrap"></div>
+        <div class="zone-detail-panel" id="zone-detail-panel">
+          <h3>Select a zone</h3>
+          <p style="color:var(--text-muted);font-size:12px">Click any zone on the blade diagram to see defect details for that area.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Foil Grid -->
@@ -228,7 +273,7 @@
 
 <script>
 const KNOWN = ['Dents','Scratches','Nicks','FOD','Erosion','Cracks','Gouges','Surface','Edge'];
-let TYPES = [], allDefects = [], report = null, activeTypes = new Set(), activeFoil = null;
+let TYPES = [], allDefects = [], report = null, activeTypes = new Set(), activeFoil = null, activeZone = null;
 
 const plotColors = { bg: '#1a2338', paper: '#1a2338', grid: '#2a3654', font: '#8892a4', accent: '#3b82f6' };
 const typeColors = { nick: '#8b5cf6', nicks: '#8b5cf6', dent: '#f59e0b', dents: '#f59e0b', scratch: '#3b82f6', scratches: '#3b82f6', fod: '#ef4444', erosion: '#22c55e', crack: '#ec4899', cracks: '#ec4899', gouge: '#f97316', gouges: '#f97316', surface: '#64748b', edge: '#06b6d4', unknown: '#475569' };
@@ -252,6 +297,7 @@ function filtered() {
   return allDefects.filter(d => {
     if (!activeTypes.has(norm(d.classified_type))) return false;
     if (activeFoil !== null && String(d.foil_number) !== String(activeFoil)) return false;
+    if (activeZone !== null && !(d.zone_ids || []).includes(activeZone)) return false;
     return true;
   });
 }
@@ -288,6 +334,7 @@ function toggleType(t) {
     activeTypes.has(t) ? activeTypes.delete(t) : activeTypes.add(t);
   }
   buildToggles(); renderFoilGrid(); renderTable();
+  if (typeof _zoneData !== 'undefined' && _zoneData) buildZoneMap(_zoneData);
 }
 
 function foilMap() {
@@ -397,6 +444,253 @@ function renderTable() {
   }).join('');
 }
 
+/* ── Blade Zone Map ── */
+const ZONE_DEFS = {
+  A1: {name:'Airfoil LE Inner',severity:'CRITICAL'},
+  A2: {name:'Airfoil LE Mid',severity:'CRITICAL'},
+  A3: {name:'Airfoil LE Outer',severity:'CRITICAL'},
+  B1: {name:'Airfoil TE Inner',severity:'CRITICAL'},
+  B2: {name:'Airfoil TE Mid',severity:'CRITICAL'},
+  B3: {name:'Airfoil TE Outer',severity:'CRITICAL'},
+  C1: {name:'Convex Inner',severity:'STANDARD'},
+  C2: {name:'Convex Mid-Inner',severity:'STANDARD'},
+  C3: {name:'Convex Mid-Outer',severity:'STANDARD'},
+  C4: {name:'Convex Outer',severity:'STANDARD'},
+  D1: {name:'Concave Inner',severity:'STANDARD'},
+  D2: {name:'Concave Mid-Inner',severity:'STANDARD'},
+  D3: {name:'Concave Mid-Outer',severity:'STANDARD'},
+  D4: {name:'Concave Outer',severity:'STANDARD'},
+  E1: {name:'ID Fillet',severity:'HIGH'},
+  E2a:{name:'Fillet a',severity:'HIGH'},
+  E2b:{name:'Fillet b',severity:'HIGH'},
+  E2c:{name:'Fillet c',severity:'HIGH'},
+  E2d:{name:'Fillet d',severity:'HIGH'},
+  E3: {name:'TE Fillet',severity:'HIGH'},
+  G1: {name:'LE Tip Corner',severity:'CRITICAL'},
+  G2: {name:'TE Tip Corner',severity:'CRITICAL'},
+  H:  {name:'Airfoil Tip',severity:'CRITICAL'},
+  J:  {name:'Platform',severity:'STANDARD'},
+};
+
+var _zoneData = null;
+
+function zoneColor(count) {
+  if (count === 0) return '#1a2338';
+  if (count <= 2) return '#22c55e30';
+  if (count <= 5) return '#f59e0b40';
+  return '#ef444450';
+}
+function sevStroke(sev) {
+  if (sev === 'CRITICAL') return '#ef4444';
+  if (sev === 'HIGH') return '#f59e0b';
+  return '#3b82f6';
+}
+
+function getZoneCounts(zoneData) {
+  var counts = {};
+  var activeFilter = Array.from(activeTypes);
+  Object.keys(ZONE_DEFS).forEach(function(z) { counts[z] = 0; });
+  if (zoneData && zoneData.zones) {
+    Object.keys(zoneData.zones).forEach(function(z) {
+      var zd = zoneData.zones[z];
+      if (zd && zd.defects) {
+        counts[z] = zd.defects.filter(function(d) {
+          return activeTypes.has(norm(d.classified_type || d.type || ''));
+        }).length;
+      }
+    });
+  }
+  allDefects.forEach(function(d) {
+    if (!activeTypes.has(norm(d.classified_type))) return;
+    (d.zone_ids || []).forEach(function(z) {
+      if (ZONE_DEFS[z] && !(zoneData && zoneData.zones && zoneData.zones[z])) {
+        counts[z] = (counts[z] || 0) + 1;
+      }
+    });
+  });
+  return counts;
+}
+
+function buildZoneMap(zoneData) {
+  _zoneData = zoneData;
+  var wrap = document.getElementById('zone-svg-wrap');
+  if (!wrap) return;
+  var counts = getZoneCounts(zoneData);
+
+  var svg = '<svg viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg" style="font-family:Segoe UI,system-ui,sans-serif">';
+
+  svg += '<defs>';
+  svg += '<linearGradient id="bladeBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0d1321"/><stop offset="100%" stop-color="#151d30"/></linearGradient>';
+  svg += '</defs>';
+  svg += '<rect width="700" height="500" fill="url(#bladeBg)" rx="8"/>';
+
+  svg += '<text x="350" y="22" text-anchor="middle" fill="#8892a4" font-size="10" font-weight="600" letter-spacing="1.5" text-transform="uppercase">BLADE CROSS-SECTION — P&amp;W ZONE MAP</text>';
+  svg += '<text x="60" y="248" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="600">LEADING</text>';
+  svg += '<text x="60" y="260" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="600">EDGE</text>';
+  svg += '<text x="640" y="248" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="600">TRAILING</text>';
+  svg += '<text x="640" y="260" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="600">EDGE</text>';
+
+  var sel = activeZone;
+
+  function zoneRect(id, x, y, w, h) {
+    var c = counts[id] || 0;
+    var def = ZONE_DEFS[id];
+    var fill = zoneColor(c);
+    var stroke = sel === id ? '#fff' : sevStroke(def.severity);
+    var sw = sel === id ? 2.5 : 1;
+    var cls = 'zone-region' + (sel === id ? ' zone-selected' : '');
+    svg += '<rect class="' + cls + '" data-zone="' + id + '" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="3" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" onclick="selectZone(\'' + id + '\')"/>';
+    svg += '<text class="zone-label" x="' + (x + w/2) + '" y="' + (y + h/2 - 4) + '" text-anchor="middle" dominant-baseline="middle">' + id + '</text>';
+    if (c > 0) svg += '<text class="zone-count" x="' + (x + w/2) + '" y="' + (y + h/2 + 8) + '" text-anchor="middle" dominant-baseline="middle">' + c + '</text>';
+  }
+
+  function zonePath(id, path, cx, cy) {
+    var c = counts[id] || 0;
+    var def = ZONE_DEFS[id];
+    var fill = zoneColor(c);
+    var stroke = sel === id ? '#fff' : sevStroke(def.severity);
+    var sw = sel === id ? 2.5 : 1;
+    var cls = 'zone-region' + (sel === id ? ' zone-selected' : '');
+    svg += '<path class="' + cls + '" data-zone="' + id + '" d="' + path + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '" onclick="selectZone(\'' + id + '\')"/>';
+    svg += '<text class="zone-label" x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" dominant-baseline="middle">' + id + '</text>';
+    if (c > 0) svg += '<text class="zone-count" x="' + cx + '" y="' + (cy + 8) + '" text-anchor="middle" dominant-baseline="middle">' + c + '</text>';
+  }
+
+  // Airfoil outline (decorative, behind zones)
+  svg += '<path d="M100,250 Q90,200 120,140 Q150,80 220,55 L550,55 Q600,55 620,80 Q650,120 640,250 Q650,380 620,420 Q600,445 550,445 L220,445 Q150,420 120,360 Q90,300 100,250 Z" fill="none" stroke="#2a3654" stroke-width="0.5" stroke-dasharray="4,4"/>';
+
+  // Leading Edge — A1 (inner/bottom), A2 (mid), A3 (outer/top) — thin strips along left
+  zonePath('A3', 'M105,100 Q95,160 92,210 L110,210 L125,160 Q130,130 128,100 Z', 112, 155);
+  zonePath('A2', 'M92,210 Q90,245 92,290 L110,290 L110,210 Z', 101, 250);
+  zonePath('A1', 'M92,290 Q95,340 105,400 L128,400 Q130,370 125,340 L110,290 Z', 112, 345);
+
+  // Trailing Edge — B1 (inner/bottom), B2 (mid), B3 (outer/top) — thin strips along right
+  zonePath('B3', 'M575,100 Q580,130 582,160 L600,210 Q608,160 605,100 Z', 590, 155);
+  zonePath('B2', 'M600,210 L600,290 Q608,290 608,250 Q608,210 600,210 Z', 604, 250);
+  zonePath('B1', 'M600,290 L582,340 Q580,370 575,400 L605,400 Q608,340 600,290 Z', 590, 345);
+
+  // Convex surface (center-left) — C1..C4 stacked top to bottom
+  zoneRect('C4', 135, 65, 190, 90);
+  zoneRect('C3', 135, 160, 190, 85);
+  zoneRect('C2', 135, 250, 190, 85);
+  zoneRect('C1', 135, 340, 190, 90);
+
+  // Concave surface (center-right) — D1..D4 stacked top to bottom
+  zoneRect('D4', 370, 65, 190, 90);
+  zoneRect('D3', 370, 160, 190, 85);
+  zoneRect('D2', 370, 250, 190, 85);
+  zoneRect('D1', 370, 340, 190, 90);
+
+  // Divider line between convex and concave
+  svg += '<line x1="340" y1="60" x2="340" y2="440" stroke="#2a3654" stroke-width="1" stroke-dasharray="3,3"/>';
+  svg += '<text x="340" y="50" text-anchor="middle" fill="#8892a4" font-size="8" font-weight="600">CONVEX ← | → CONCAVE</text>';
+
+  // Tip area — H center, G1 left, G2 right
+  zoneRect('G1', 135, 35, 80, 26);
+  zoneRect('H',  255, 35, 190, 26);
+  zoneRect('G2', 485, 35, 80, 26);
+
+  // Fillet areas — E1, E2a-d, E3 along bottom
+  zoneRect('E1', 135, 435, 70, 28);
+  zoneRect('E2a', 210, 435, 75, 28);
+  zoneRect('E2b', 290, 435, 75, 28);
+  zoneRect('E2c', 370, 435, 75, 28);
+  zoneRect('E2d', 450, 435, 75, 28);
+  zoneRect('E3', 530, 435, 70, 28);
+
+  // Platform — J — full width at very bottom
+  zoneRect('J', 135, 468, 465, 26);
+
+  // Legend
+  svg += '<g transform="translate(15,460)">';
+  svg += '<rect x="0" y="0" width="8" height="8" rx="2" fill="#1a2338" stroke="#2a3654" stroke-width="0.5"/><text x="12" y="8" fill="#8892a4" font-size="8">0</text>';
+  svg += '<rect x="30" y="0" width="8" height="8" rx="2" fill="#22c55e30" stroke="#22c55e" stroke-width="0.5"/><text x="42" y="8" fill="#8892a4" font-size="8">1-2</text>';
+  svg += '<rect x="65" y="0" width="8" height="8" rx="2" fill="#f59e0b40" stroke="#f59e0b" stroke-width="0.5"/><text x="77" y="8" fill="#8892a4" font-size="8">3-5</text>';
+  svg += '<rect x="100" y="0" width="8" height="8" rx="2" fill="#ef444450" stroke="#ef4444" stroke-width="0.5"/><text x="112" y="8" fill="#8892a4" font-size="8">6+</text>';
+  svg += '</g>';
+
+  svg += '</svg>';
+  wrap.innerHTML = svg;
+}
+
+function selectZone(zoneId) {
+  if (activeZone === zoneId) { clearZoneFilter(); return; }
+  activeZone = zoneId;
+  document.getElementById('zone-filter-bar').style.display = 'flex';
+  document.getElementById('zone-filter-tag').textContent = 'Zone ' + zoneId + ' — ' + (ZONE_DEFS[zoneId] ? ZONE_DEFS[zoneId].name : zoneId);
+  if (_zoneData) buildZoneMap(_zoneData);
+  renderZoneDetail(zoneId, _zoneData);
+  renderFoilGrid();
+  renderTable();
+}
+
+function clearZoneFilter() {
+  activeZone = null;
+  document.getElementById('zone-filter-bar').style.display = 'none';
+  document.getElementById('zone-detail-panel').innerHTML = '<h3>Select a zone</h3><p style="color:var(--text-muted);font-size:12px">Click any zone on the blade diagram to see defect details for that area.</p>';
+  if (_zoneData) buildZoneMap(_zoneData);
+  renderFoilGrid();
+  renderTable();
+}
+
+function renderZoneDetail(zoneId, zoneData) {
+  var panel = document.getElementById('zone-detail-panel');
+  var def = ZONE_DEFS[zoneId];
+  if (!def) { panel.innerHTML = '<h3>Unknown zone</h3>'; return; }
+
+  var defects = [];
+  if (zoneData && zoneData.zones && zoneData.zones[zoneId] && zoneData.zones[zoneId].defects) {
+    defects = zoneData.zones[zoneId].defects.filter(function(d) {
+      return activeTypes.has(norm(d.classified_type || d.type || ''));
+    });
+  }
+  if (!defects.length) {
+    allDefects.forEach(function(d) {
+      if (!activeTypes.has(norm(d.classified_type))) return;
+      if ((d.zone_ids || []).includes(zoneId)) defects.push(d);
+    });
+  }
+
+  var sevColor = sevStroke(def.severity);
+  var maxDepth = 0;
+  var typeCounts = {};
+  var defectIds = [];
+  defects.forEach(function(d) {
+    var dp = parseFloat(d.depth_in || d.depth || 0);
+    if (dp > maxDepth) maxDepth = dp;
+    var t = title(norm(d.classified_type || d.type || 'unknown'));
+    typeCounts[t] = (typeCounts[t] || 0) + 1;
+    defectIds.push(d.defect_id || d.id || '?');
+  });
+
+  var html = '';
+  html += '<div class="zd-zone-name" style="color:' + sevColor + '">' + zoneId + ' — ' + def.name + '</div>';
+  html += '<div class="zd-severity" style="color:' + sevColor + '">' + def.severity + ' zone</div>';
+  html += '<div class="zd-stat"><span class="zd-label">Defect count</span><strong>' + defects.length + '</strong></div>';
+  html += '<div class="zd-stat"><span class="zd-label">Max depth</span><span>' + (maxDepth > 0 ? maxDepth.toFixed(4) + '"' : '—') + '</span></div>';
+  html += '<div class="zd-stat"><span class="zd-label">Severity class</span><span style="color:' + sevColor + '">' + def.severity + '</span></div>';
+
+  if (Object.keys(typeCounts).length) {
+    html += '<div style="margin-top:12px;font-size:11px;font-weight:700;margin-bottom:6px">Defect Types</div>';
+    html += '<div class="zd-types">';
+    Object.keys(typeCounts).forEach(function(t) {
+      html += '<span class="zd-type-tag" style="border-left:2px solid ' + tColor(t) + '">' + typeCounts[t] + ' ' + t + '</span>';
+    });
+    html += '</div>';
+  }
+
+  if (defectIds.length) {
+    html += '<div style="margin-top:12px;font-size:11px;font-weight:700;margin-bottom:6px">Defect IDs</div>';
+    html += '<div style="font-size:11px;color:var(--text-muted);line-height:1.6">' + defectIds.join(', ') + '</div>';
+  }
+
+  if (!defects.length) {
+    html += '<div style="margin-top:16px;padding:12px;background:var(--surface2);border-radius:6px;font-size:12px;color:var(--text-muted);text-align:center">No defects in this zone for the selected type filters.</div>';
+  }
+
+  panel.innerHTML = html;
+}
+
 function init() {
   fetch('/api/maintenance/data')
     .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
@@ -423,6 +717,11 @@ function init() {
       buildToggles();
       renderFoilGrid();
       renderTable();
+
+      fetch('/api/zone-map/data')
+        .then(function(r) { return r.ok ? r.json() : {}; })
+        .then(function(zd) { buildZoneMap(zd); })
+        .catch(function() { buildZoneMap({}); });
     })
     .catch(function(err) {
       document.getElementById('loading-overlay').classList.remove('show');

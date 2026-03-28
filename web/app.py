@@ -46,12 +46,25 @@ def _render(request: Request, template_name: str, context: dict = None):
 
 
 def _load_latest_report():
+    """Load the richest report by scoring defect count + ML + sprint4 data."""
     output_dir = PROJECT_ROOT / "output"
-    json_files = sorted(output_dir.glob("*.json"), key=os.path.getmtime, reverse=True)
-    if not json_files:
-        return None
-    with open(json_files[0]) as f:
-        return json.load(f)
+    best, best_score = None, -1
+    for f in output_dir.glob("*.json"):
+        if f.name.endswith("_features_metadata.json"):
+            continue
+        if f.parent.name == "visualizations":
+            continue
+        try:
+            with open(f) as fh:
+                data = json.load(fh)
+            n = len(data.get("defects", []))
+            has_ml = any(d.get("classified_type") for d in data.get("defects", [])[:3])
+            score = n * 10 + (5 if has_ml else 0) + (3 if data.get("sprint4") else 0)
+            if score > best_score:
+                best, best_score = data, score
+        except Exception:
+            continue
+    return best
 
 
 def _load_latest_sprint4_report():
@@ -471,6 +484,34 @@ async def api_maintenance_data():
         "scan_file": report.get("scan_file"),
         "disposition_breakdown": report.get("disposition_breakdown", {}),
         "defects": stripped_defects,
+    }
+
+
+@app.get("/api/zone-map/data")
+async def api_zone_map_data():
+    """Per-zone defect aggregation for the blade zone map visualization."""
+    report = _load_latest_report()
+    if not report:
+        raise HTTPException(404, "No report available")
+    zone_agg = {}
+    for d in report.get("defects", []):
+        dtype = d.get("classified_type") or d.get("classification", "unknown")
+        disp = d.get("disposition", "N/A")
+        depth = d.get("depth_in", 0)
+        for zid in (d.get("zone_ids") or d.get("zones") or []):
+            if zid not in zone_agg:
+                zone_agg[zid] = {"zone_id": zid, "count": 0, "types": {}, "dispositions": {}, "max_depth_in": 0, "defect_ids": []}
+            z = zone_agg[zid]
+            z["count"] += 1
+            z["types"][dtype] = z["types"].get(dtype, 0) + 1
+            z["dispositions"][disp] = z["dispositions"].get(disp, 0) + 1
+            z["max_depth_in"] = max(z["max_depth_in"], depth or 0)
+            z["defect_ids"].append(d.get("defect_id"))
+    return {
+        "part_number": report.get("part_number"),
+        "total_defects": report.get("total_defects", 0),
+        "foil_count": report.get("foil_count", 0),
+        "zones": zone_agg,
     }
 
 
