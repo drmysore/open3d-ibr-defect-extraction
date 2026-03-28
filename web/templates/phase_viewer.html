@@ -82,6 +82,30 @@
   }
   .empty-msg.show { display: block; }
   .empty-msg h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+
+  .report-banner {
+    display: none; padding: 12px 20px; border-radius: 10px; margin-bottom: 16px;
+    background: linear-gradient(135deg, rgba(59,130,246,.12), rgba(34,197,94,.08));
+    border: 1px solid var(--border); font-size: 13px; color: var(--text-muted);
+    align-items: center; gap: 10px;
+  }
+  .report-banner.show { display: flex; }
+  .report-banner .part { font-weight: 700; color: var(--accent); }
+  .report-banner .stat { color: var(--text); font-weight: 600; }
+  .report-banner .disp { padding: 2px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; text-transform: uppercase; }
+  .disp-serviceable { background: rgba(34,197,94,.15); color: var(--green); }
+  .disp-blend { background: rgba(245,158,11,.15); color: var(--amber); }
+  .disp-replace { background: rgba(239,68,68,.15); color: var(--red); }
+
+  #phase8-container {
+    display: none; width: 100%;
+  }
+  #phase8-container .p8-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;
+  }
+  #phase8-container .p8-full { width: 100%; }
+  .p8-chart { height: 360px; }
+  .p8-chart-full { height: 340px; }
 </style>
 </head>
 <body>
@@ -98,6 +122,7 @@
     <a href="/gallery">Gallery</a>
     <a href="/maintenance">Maintenance</a>
     <a href="/quality-audits">Audits</a>
+    <a href="/defect-library">Defect Library</a>
   </nav>
 </div>
 
@@ -108,6 +133,14 @@
     <button class="tab-btn" data-phase="4">Phase 4 — Segmentation</button>
     <button class="tab-btn" data-phase="5">Phase 5 — Clustering</button>
     <button class="tab-btn" data-phase="7">Phase 7 — Zone Map</button>
+    <button class="tab-btn" data-phase="8">Phase 8 — Defect Summary</button>
+  </div>
+
+  <div class="report-banner" id="report-banner">
+    Loaded from: <span class="part" id="banner-part"></span> —
+    <span class="stat" id="banner-defects"></span> defects,
+    <span class="stat" id="banner-foils"></span> foils,
+    <span class="disp" id="banner-disp"></span>
   </div>
 
   <div class="card">
@@ -123,10 +156,19 @@
         <div class="spinner-text">Loading phase figure...</div>
       </div>
       <div class="empty-msg" id="empty-msg">
-        <h3>No Figure Available</h3>
-        <p>Run the pipeline first to generate phase visualizations.</p>
+        <h3 id="empty-title">No Figure Available</h3>
+        <p id="empty-detail">Run the pipeline first to generate phase visualizations.</p>
       </div>
       <div id="plot-container"></div>
+      <div id="phase8-container">
+        <div class="p8-row">
+          <div id="p8-donut" class="p8-chart"></div>
+          <div id="p8-type-bar" class="p8-chart"></div>
+        </div>
+        <div class="p8-full">
+          <div id="p8-foil-bar" class="p8-chart-full"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -138,15 +180,41 @@ const PHASES = {
   4: 'Phase 4 — Segmentation',
   5: 'Phase 5 — Clustering',
   7: 'Phase 7 — Zone Map',
+  8: 'Phase 8 — Defect Summary',
 };
 
 let currentPhase = 1;
+let reportData = null;
 const cache = {};
 
 const plotEl = document.getElementById('plot-container');
 const spinnerEl = document.getElementById('spinner');
 const emptyEl = document.getElementById('empty-msg');
+const emptyTitle = document.getElementById('empty-title');
+const emptyDetail = document.getElementById('empty-detail');
 const titleEl = document.getElementById('phase-title');
+const phase8El = document.getElementById('phase8-container');
+const bannerEl = document.getElementById('report-banner');
+
+function loadReportBanner() {
+  fetch('/api/report/latest')
+    .then(r => { if (!r.ok) throw new Error('No report'); return r.json(); })
+    .then(data => {
+      reportData = data;
+      document.getElementById('banner-part').textContent = data.part_number || 'Unknown';
+      document.getElementById('banner-defects').textContent = data.total_defects || 0;
+      document.getElementById('banner-foils').textContent = data.foil_count || 0;
+      const dispEl = document.getElementById('banner-disp');
+      const disp = (data.overall_disposition || 'N/A').toUpperCase();
+      dispEl.textContent = disp;
+      dispEl.className = 'disp';
+      if (disp === 'SERVICEABLE') dispEl.classList.add('disp-serviceable');
+      else if (disp === 'BLEND') dispEl.classList.add('disp-blend');
+      else if (disp === 'REPLACE') dispEl.classList.add('disp-replace');
+      bannerEl.classList.add('show');
+    })
+    .catch(() => {});
+}
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -160,8 +228,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 function loadPhase(phase) {
   plotEl.style.display = 'none';
+  phase8El.style.display = 'none';
   emptyEl.classList.remove('show');
   spinnerEl.classList.add('show');
+
+  if (phase === 8) {
+    loadPhase8();
+    return;
+  }
 
   if (cache[phase]) {
     renderFigure(cache[phase]);
@@ -179,6 +253,9 @@ function loadPhase(phase) {
     })
     .catch(() => {
       spinnerEl.classList.remove('show');
+      const partLabel = reportData ? reportData.part_number : 'this part';
+      emptyTitle.textContent = 'Phase ' + phase + ' visualization not available';
+      emptyDetail.textContent = 'Run the pipeline for ' + partLabel + ' to generate phase figures.';
       emptyEl.classList.add('show');
     });
 }
@@ -206,10 +283,95 @@ function renderFigure(fig) {
   Plotly.react(plotEl, fig.data, fig.layout, { responsive: true });
 }
 
+const P8_LAYOUT_BASE = {
+  paper_bgcolor: '#131a2b', plot_bgcolor: '#131a2b',
+  font: { color: '#e2e8f0', family: 'Segoe UI, system-ui, sans-serif', size: 12 },
+  margin: { t: 40, b: 50, l: 50, r: 20 },
+};
+const DISP_COLORS = { SERVICEABLE: '#22c55e', BLEND: '#f59e0b', REPLACE: '#ef4444' };
+
+function loadPhase8() {
+  const build = (data) => {
+    spinnerEl.classList.remove('show');
+    phase8El.style.display = 'block';
+
+    const defects = data.defects || [];
+    const breakdown = data.disposition_breakdown || {};
+
+    // --- Disposition donut ---
+    const dispLabels = Object.keys(breakdown);
+    const dispValues = Object.values(breakdown);
+    const dispColors = dispLabels.map(l => DISP_COLORS[l.toUpperCase()] || '#8892a4');
+    Plotly.react('p8-donut', [{
+      labels: dispLabels, values: dispValues, type: 'pie', hole: 0.52,
+      marker: { colors: dispColors },
+      textinfo: 'label+value', textposition: 'outside',
+      textfont: { size: 12 },
+    }], { ...P8_LAYOUT_BASE, title: { text: 'Disposition Breakdown', font: { size: 14 } }, showlegend: false }, { responsive: true });
+
+    // --- Defect type bar chart ---
+    const typeCounts = {};
+    defects.forEach(d => {
+      const t = d.classified_type || d.defect_type || d.classification || 'unknown';
+      typeCounts[t] = (typeCounts[t] || 0) + 1;
+    });
+    const typeLabels = Object.keys(typeCounts).sort((a, b) => typeCounts[b] - typeCounts[a]);
+    const typeValues = typeLabels.map(l => typeCounts[l]);
+    Plotly.react('p8-type-bar', [{
+      x: typeLabels, y: typeValues, type: 'bar',
+      marker: { color: '#3b82f6', borderRadius: 4 },
+      text: typeValues, textposition: 'auto',
+    }], {
+      ...P8_LAYOUT_BASE,
+      title: { text: 'Defect Types', font: { size: 14 } },
+      xaxis: { color: '#8892a4', tickangle: -30 },
+      yaxis: { color: '#8892a4', title: 'Count', gridcolor: '#1a2338' },
+    }, { responsive: true });
+
+    // --- Foil distribution bar chart ---
+    const foilCounts = {};
+    defects.forEach(d => {
+      const f = d.foil_number != null ? d.foil_number : '?';
+      foilCounts[f] = (foilCounts[f] || 0) + 1;
+    });
+    const foilLabels = Object.keys(foilCounts).sort((a, b) => Number(a) - Number(b));
+    const foilValues = foilLabels.map(l => foilCounts[l]);
+    const foilColors = foilValues.map(v => v >= 4 ? '#ef4444' : v >= 2 ? '#f59e0b' : '#22c55e');
+    Plotly.react('p8-foil-bar', [{
+      x: foilLabels.map(l => 'Foil ' + l), y: foilValues, type: 'bar',
+      marker: { color: foilColors },
+      text: foilValues, textposition: 'auto',
+    }], {
+      ...P8_LAYOUT_BASE,
+      title: { text: 'Defects per Foil', font: { size: 14 } },
+      xaxis: { color: '#8892a4', tickangle: -45, dtick: 1 },
+      yaxis: { color: '#8892a4', title: 'Defect Count', gridcolor: '#1a2338' },
+      margin: { t: 40, b: 80, l: 50, r: 20 },
+    }, { responsive: true });
+  };
+
+  if (reportData && reportData.defects) {
+    build(reportData);
+    return;
+  }
+
+  fetch('/api/report/latest')
+    .then(r => { if (!r.ok) throw new Error('No report'); return r.json(); })
+    .then(data => { reportData = data; build(data); })
+    .catch(() => {
+      spinnerEl.classList.remove('show');
+      emptyTitle.textContent = 'No inspection report available';
+      emptyDetail.textContent = 'Run the pipeline to generate a defect report for the Defect Summary view.';
+      emptyEl.classList.add('show');
+    });
+}
+
 function exportHTML() {
+  if (currentPhase === 8) return;
   window.open('/api/phases/' + currentPhase + '/html', '_blank');
 }
 
+loadReportBanner();
 loadPhase(1);
 </script>
 

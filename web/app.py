@@ -189,6 +189,11 @@ async def quality_audits_page(request: Request):
     return _render(request, "quality_audits.html")
 
 
+@app.get("/defect-library", response_class=HTMLResponse)
+async def defect_library_page(request: Request):
+    return _render(request, "defect_library.html")
+
+
 # ----- API Endpoints -----
 
 @app.get("/api/report/latest")
