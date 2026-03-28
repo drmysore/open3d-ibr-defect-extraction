@@ -225,7 +225,7 @@
   <div class="detail-drawer" id="detail-drawer">
     <div class="drawer-header">
       <h2 id="drawer-title">Foil Details</h2>
-      <button class="drawer-close" onclick="closeDrawer()" title="Close">✕</button>
+      <button class="drawer-close" onclick="closeDrawer()" title="Close">X</button>
     </div>
     <div class="drawer-body">
       <div class="drawer-stats" id="drawer-stats"></div>
@@ -284,7 +284,7 @@ function title(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 function dispCls(d) { return d === 'SERVICEABLE' ? 'green' : d === 'BLEND' ? 'amber' : 'red'; }
 function dispBadge(d) { return '<span class="badge badge-' + dispCls(d) + '">' + (d || 'N/A') + '</span>'; }
 function foilDisp(defs) { if (defs.some(d => d.disposition === 'REPLACE')) return 'REPLACE'; if (defs.some(d => d.disposition === 'BLEND')) return 'BLEND'; return 'SERVICEABLE'; }
-function statusIcon(disp) { return disp === 'SERVICEABLE' ? { c: 's-green', i: '✓' } : disp === 'BLEND' ? { c: 's-amber', i: '⚠' } : { c: 's-red', i: '✗' }; }
+function statusIcon(disp) { return disp === 'SERVICEABLE' ? { c: 's-green', i: 'OK' } : disp === 'BLEND' ? { c: 's-amber', i: '!!' } : { c: 's-red', i: 'X' }; }
 function fmt(v, d) { return v != null ? parseFloat(v).toFixed(d) : '—'; }
 
 function typeCounts() {
@@ -423,7 +423,7 @@ function openDrawer(fn) {
     const rc = d.disposition === 'SERVICEABLE' ? 'row-green' : d.disposition === 'BLEND' ? 'row-amber' : 'row-red';
     const zones = (d.zone_names || d.zone_ids || []).join(', ') || '—';
     const pass = d.disposition === 'SERVICEABLE';
-    return '<tr class="' + rc + '"><td>' + (i + 1) + '</td><td>' + (d.defect_id || '') + '</td><td style="color:' + tColor(d.classified_type) + '">' + title(norm(d.classified_type)) + '</td><td>' + zones + '</td><td>' + fmt(d.depth_in, 4) + '</td><td>' + fmt(d.length_in, 4) + '</td><td>' + fmt(d.width_in, 4) + '</td><td>' + dispBadge(d.disposition) + '</td><td>' + fmt(d.ml_confidence, 3) + '</td><td class="' + (pass ? 'status-pass' : 'status-fail') + '">' + (pass ? '✓' : '✗') + '</td></tr>';
+    return '<tr class="' + rc + '"><td>' + (i + 1) + '</td><td>' + (d.defect_id || '') + '</td><td style="color:' + tColor(d.classified_type) + '">' + title(norm(d.classified_type)) + '</td><td>' + zones + '</td><td>' + fmt(d.depth_in, 4) + '</td><td>' + fmt(d.length_in, 4) + '</td><td>' + fmt(d.width_in, 4) + '</td><td>' + dispBadge(d.disposition) + '</td><td>' + fmt(d.ml_confidence, 3) + '</td><td class="' + (pass ? 'status-pass' : 'status-fail') + '">' + (pass ? 'PASS' : 'FAIL') + '</td></tr>';
   }).join('');
 
   drawer.classList.add('open');
@@ -440,7 +440,7 @@ function renderTable() {
     const rc = d.disposition === 'SERVICEABLE' ? 'row-green' : d.disposition === 'BLEND' ? 'row-amber' : 'row-red';
     const zones = (d.zone_names || d.zone_ids || []).join(', ') || '—';
     const pass = d.disposition === 'SERVICEABLE';
-    return '<tr class="' + rc + '"><td>' + (i + 1) + '</td><td><strong>' + d.foil_number + '</strong></td><td style="color:' + tColor(d.classified_type) + '">' + title(norm(d.classified_type)) + '</td><td>' + zones + '</td><td>' + fmt(d.depth_in, 4) + '</td><td>' + fmt(d.length_in, 4) + '</td><td>' + fmt(d.width_in, 4) + '</td><td>' + (d.nearest_edge || '—') + '</td><td>' + dispBadge(d.disposition) + '</td><td>' + fmt(d.ml_confidence, 3) + '</td><td class="' + (pass ? 'status-pass' : 'status-fail') + '">' + (pass ? '✓' : '✗') + '</td></tr>';
+    return '<tr class="' + rc + '"><td>' + (i + 1) + '</td><td><strong>' + d.foil_number + '</strong></td><td style="color:' + tColor(d.classified_type) + '">' + title(norm(d.classified_type)) + '</td><td>' + zones + '</td><td>' + fmt(d.depth_in, 4) + '</td><td>' + fmt(d.length_in, 4) + '</td><td>' + fmt(d.width_in, 4) + '</td><td>' + (d.nearest_edge || '—') + '</td><td>' + dispBadge(d.disposition) + '</td><td>' + fmt(d.ml_confidence, 3) + '</td><td class="' + (pass ? 'status-pass' : 'status-fail') + '">' + (pass ? 'PASS' : 'FAIL') + '</td></tr>';
   }).join('');
 }
 

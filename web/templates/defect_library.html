@@ -296,14 +296,14 @@
   'use strict';
 
   const DEFECT_TYPES = [
-    { key: 'nick',    name: 'Nick',       icon: '⚡', color: '#ef4444', desc: 'Small material displacement from impact, typically V-shaped indentation on edges.',                   zones: 'A1-A3, B1-B3, G1-G2', severity: 'CRITICAL' },
-    { key: 'dent',    name: 'Dent',       icon: '🔴', color: '#f59e0b', desc: 'Rounded depression from blunt force impact, no material removal.',                                     zones: 'A1-A3, B1-B3, C1-C4, D1-D4', severity: 'HIGH' },
-    { key: 'scratch', name: 'Scratch',    icon: '✏️', color: '#8b5cf6', desc: 'Linear surface damage from abrasive contact. May not be repairable on leading edges.',                 zones: 'A2, C1-C4, D1-D4', severity: 'HIGH' },
-    { key: 'crack',   name: 'Crack',      icon: '⚠️', color: '#dc2626', desc: 'Fracture propagation through material. Always requires replacement — non-repairable.',                 zones: 'All zones', severity: 'CRITICAL' },
-    { key: 'fod',     name: 'FOD',        icon: '💥', color: '#ec4899', desc: 'Foreign Object Damage — material loss or deformation from ingested debris.',                            zones: 'A1-A3, B1-B3, H', severity: 'CRITICAL' },
-    { key: 'erosion', name: 'Erosion',    icon: '🌊', color: '#06b6d4', desc: 'Progressive material loss from particulate or fluid flow across the surface.',                          zones: 'A1-A3, G1-G2, H', severity: 'HIGH' },
-    { key: 'gouge',   name: 'Gouge',      icon: '🔧', color: '#f97316', desc: 'Deep material removal with defined edges, typically from handling or tool contact.',                    zones: 'C1-C4, D1-D4, J', severity: 'HIGH' },
-    { key: 'curled_tip', name: 'Curled Tip', icon: '↩️', color: '#14b8a6', desc: 'Deformation of the airfoil tip from impact or thermal distortion.',                                   zones: 'G1-G2, H', severity: 'CRITICAL' },
+    { key: 'nick',    name: 'Nick',       icon: 'NK', color: '#ef4444', desc: 'Small material displacement from impact, typically V-shaped indentation on edges.',                   zones: 'A1-A3, B1-B3, G1-G2', severity: 'CRITICAL' },
+    { key: 'dent',    name: 'Dent',       icon: 'DN', color: '#f59e0b', desc: 'Rounded depression from blunt force impact, no material removal.',                                     zones: 'A1-A3, B1-B3, C1-C4, D1-D4', severity: 'HIGH' },
+    { key: 'scratch', name: 'Scratch',    icon: 'SC', color: '#8b5cf6', desc: 'Linear surface damage from abrasive contact. May not be repairable on leading edges.',                 zones: 'A2, C1-C4, D1-D4', severity: 'HIGH' },
+    { key: 'crack',   name: 'Crack',      icon: 'CR', color: '#dc2626', desc: 'Fracture propagation through material. Always requires replacement — non-repairable.',                 zones: 'All zones', severity: 'CRITICAL' },
+    { key: 'fod',     name: 'FOD',        icon: 'FD', color: '#ec4899', desc: 'Foreign Object Damage — material loss or deformation from ingested debris.',                            zones: 'A1-A3, B1-B3, H', severity: 'CRITICAL' },
+    { key: 'erosion', name: 'Erosion',    icon: 'ER', color: '#06b6d4', desc: 'Progressive material loss from particulate or fluid flow across the surface.',                          zones: 'A1-A3, G1-G2, H', severity: 'HIGH' },
+    { key: 'gouge',   name: 'Gouge',      icon: 'GG', color: '#f97316', desc: 'Deep material removal with defined edges, typically from handling or tool contact.',                    zones: 'C1-C4, D1-D4, J', severity: 'HIGH' },
+    { key: 'curled_tip', name: 'Curled Tip', icon: 'CT', color: '#14b8a6', desc: 'Deformation of the airfoil tip from impact or thermal distortion.',                                   zones: 'G1-G2, H', severity: 'CRITICAL' },
   ];
 
   const PHASES = [
@@ -318,14 +318,14 @@
   ];
 
   const FLOW_STEPS = [
-    { icon: '📐', name: '3D Point Cloud',      desc: 'Raw scan data loaded' },
-    { icon: '📊', name: 'Deviation > Threshold', desc: 'Signed distance check' },
-    { icon: '🔬', name: 'DBSCAN Cluster',       desc: 'Group anomalous points' },
-    { icon: '📏', name: 'PCA/OBB Measure',      desc: 'Depth, length, width' },
-    { icon: '🗺️', name: 'Zone Classify',        desc: 'Assign blade zones' },
-    { icon: '📋', name: 'Apply Rules',           desc: 'P&W serviceable limits' },
-    { icon: '🤖', name: 'ML Ensemble',           desc: 'RF + GB + LR voting' },
-    { icon: '✅', name: 'Final Disposition',     desc: 'Service / Blend / Replace' },
+    { icon: '1', name: '3D Point Cloud',      desc: 'Raw scan data loaded' },
+    { icon: '2', name: 'Deviation > Threshold', desc: 'Signed distance check' },
+    { icon: '3', name: 'DBSCAN Cluster',       desc: 'Group anomalous points' },
+    { icon: '4', name: 'PCA/OBB Measure',      desc: 'Depth, length, width' },
+    { icon: '5', name: 'Zone Classify',        desc: 'Assign blade zones' },
+    { icon: '6', name: 'Apply Rules',           desc: 'P&W serviceable limits' },
+    { icon: '7', name: 'ML Ensemble',           desc: 'RF + GB + LR voting' },
+    { icon: '8', name: 'Final Disposition',     desc: 'Service / Blend / Replace' },
   ];
 
   const ZONE_ROWS = [
