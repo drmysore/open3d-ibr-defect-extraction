@@ -348,14 +348,27 @@ function foilMap() {
 function renderFoilGrid() {
   const grid = document.getElementById('foil-grid');
   const fm = foilMap();
-  const foils = Object.keys(fm).sort((a, b) => +a - +b);
-  document.getElementById('foil-subtitle').textContent = '— ' + foils.length + ' foil(s) with matching defects';
-  if (!foils.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:40px"><p>No foils match the selected types.</p></div>'; return; }
-  grid.innerHTML = foils.map(fn => {
-    const defs = fm[fn], disp = foilDisp(defs), st = statusIcon(disp);
-    const tc = {}; defs.forEach(d => { const t = title(norm(d.classified_type)); tc[t] = (tc[t] || 0) + 1; });
-    const tags = Object.entries(tc).map(([t, c]) => '<span class="foil-tag" style="border-left:2px solid ' + tColor(t) + '">' + c + ' ' + t + '</span>').join('');
+  const totalFoils = report ? (report.foil_count || 0) : 0;
+  const allFoilNums = [];
+  for (var i = 1; i <= totalFoils; i++) allFoilNums.push(String(i));
+  Object.keys(fm).forEach(function(fn) { if (allFoilNums.indexOf(fn) === -1) allFoilNums.push(fn); });
+  allFoilNums.sort(function(a, b) { return +a - +b; });
+  var withDefects = Object.keys(fm).length;
+  document.getElementById('foil-subtitle').textContent = '— ' + totalFoils + ' foil(s) total, ' + withDefects + ' with defects';
+  if (!allFoilNums.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:40px"><p>No foils found.</p></div>'; return; }
+  grid.innerHTML = allFoilNums.map(function(fn) {
+    const defs = fm[fn] || [];
     const sel = activeFoil !== null && String(activeFoil) === String(fn) ? ' selected' : '';
+    if (!defs.length) {
+      return '<div class="foil-card' + sel + '" data-foil="' + fn + '" style="opacity:.6">' +
+        '<div class="foil-card-top"><span class="foil-number">Foil ' + fn + '</span><div class="foil-status s-green">OK</div></div>' +
+        '<div class="foil-count"><strong>0</strong> defects</div>' +
+        '<div class="foil-tags"></div>' +
+        '<div class="foil-disp d-green">CLEAN</div></div>';
+    }
+    const disp = foilDisp(defs), st = statusIcon(disp);
+    const tc = {}; defs.forEach(function(d) { const t = title(norm(d.classified_type)); tc[t] = (tc[t] || 0) + 1; });
+    const tags = Object.entries(tc).map(function(e) { return '<span class="foil-tag" style="border-left:2px solid ' + tColor(e[0]) + '">' + e[1] + ' ' + e[0] + '</span>'; }).join('');
     return '<div class="foil-card' + sel + '" data-foil="' + fn + '" onclick="selectFoil(\'' + fn + '\')">' +
       '<div class="foil-card-top"><span class="foil-number">Foil ' + fn + '</span><div class="foil-status ' + st.c + '">' + st.i + '</div></div>' +
       '<div class="foil-count"><strong>' + defs.length + '</strong> defect' + (defs.length !== 1 ? 's' : '') + '</div>' +
