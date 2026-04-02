@@ -1,0 +1,72 @@
+# IBR Defect Extraction System — Local Development Stack
+# Author: Supreeth Mysore
+# Program: F135 | Classification: ITAR
+#
+# ITAR NOTICE: This compose file is for LOCAL DEVELOPMENT ONLY.
+# Production deployments use ECS Fargate via CloudFormation.
+# Do not expose services to the public internet. All data processed
+# by this stack is subject to ITAR 22 CFR Parts 120-130.
+#
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f web
+#   docker compose down -v   (destroys volumes)
+
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: ibr-defect-web
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+      - LOG_LEVEL=DEBUG
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=ibr_defect
+      - DB_USER=ibr_admin
+      - DB_PASSWORD=localdev_password
+      - PIPELINE_CONFIG_PATH=/app/config/pipeline_config.yaml
+      - PROGRAM_ID=F135
+      - ITAR_COMPLIANT=true
+    volumes:
+      - ../data:/app/data
+      - ../output:/app/output
+      - ../config:/app/config:ro
+      - ../src:/app/src:ro
+      - ../web:/app/web:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/config"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ibr-defect-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=ibr_defect
+      - POSTGRES_USER=ibr_admin
+      - POSTGRES_PASSWORD=localdev_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ibr_admin -d ibr_defect"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    driver: local

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Metrics — IBR Defect Extraction</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e17; --surface: #131a2b; --surface2: #1a2338;
+    --border: #2a3654; --text: #e2e8f0; --text-muted: #8892a4;
+    --accent: #3b82f6; --green: #22c55e; --amber: #f59e0b; --red: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 14px 32px; display: flex; align-items: center; gap: 24px;
+  }
+  .topbar h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+  .topbar h1 span { color: var(--accent); }
+  .topbar nav { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+  .topbar nav a {
+    color: var(--text-muted); font-size: 13px; font-weight: 500;
+    padding: 6px 14px; border-radius: 6px; transition: all .15s;
+  }
+  .topbar nav a:hover, .topbar nav a.active { color: var(--text); background: var(--surface2); text-decoration: none; }
+
+  .container { max-width: 1500px; margin: 0 auto; padding: 24px 32px; }
+  .page-title { font-size: 20px; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+  .page-title .sub { font-size: 13px; color: var(--text-muted); font-weight: 400; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; position: relative; overflow: hidden;
+  }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .stat-card.c-blue::before { background: var(--accent); }
+  .stat-card.c-green::before { background: var(--green); }
+  .stat-card.c-amber::before { background: var(--amber); }
+  .stat-card.c-red::before { background: var(--red); }
+  .stat-card .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+  .stat-card .value { font-size: 28px; font-weight: 700; line-height: 1.1; }
+  .stat-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; margin-bottom: 24px;
+  }
+  .card-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-header h2 { font-size: 14px; font-weight: 600; }
+  .card-header .card-sub { font-size: 12px; color: var(--text-muted); margin-left: 12px; }
+  .card-body { padding: 20px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+
+  .plot-container { width: 100%; height: 420px; }
+  .plot-container-lg { width: 100%; height: 480px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; padding: 10px 12px; color: var(--text-muted); font-weight: 600;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface);
+  }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid rgba(42,54,84,.4); }
+  tbody tr:hover { background: rgba(59,130,246,.05); }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-green { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge-amber { background: rgba(245,158,11,.15); color: var(--amber); }
+  .badge-red { background: rgba(239,68,68,.15); color: var(--red); }
+  .badge-blue { background: rgba(59,130,246,.15); color: var(--accent); }
+  .badge-gray { background: rgba(136,146,164,.15); color: var(--text-muted); }
+
+  .table-scroll { max-height: 520px; overflow-y: auto; }
+  .table-scroll::-webkit-scrollbar { width: 6px; }
+  .table-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 3px; }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .mono { font-family: 'Cascadia Code', 'Consolas', monospace; }
+
+  #loading-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(10,14,23,.85); display: none; align-items: center;
+    justify-content: center; z-index: 1000; flex-direction: column; gap: 16px;
+  }
+  #loading-overlay.show { display: flex; }
+  .spinner { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading-text { color: var(--text); font-size: 14px; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span>IBR</span> Defect Extraction System</h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/viewer3d">3D Viewer</a>
+    <a href="/reports">Reports</a>
+    <a href="/phase-viewer">Phase Viewer</a>
+    <a href="/inferno-viewer">Inferno 3D</a>
+    <a href="/comparison">Compare</a>
+    <a href="/gallery">Gallery</a>
+    <a href="/maintenance">Maintenance</a>
+    <a href="/quality-audits">Audits</a>
+    <a href="/defect-library">Defect Library</a>
+    <a href="/metrics-3d" class="active">3D Metrics</a>
+  </nav>
+</div>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div id="loading-text">Loading metrics data...</div>
+</div>
+
+<div class="container" id="main-content" style="display:none;">
+
+  <div class="page-title">3D Point Cloud Metrics <span class="sub" id="part-label"></span></div>
+
+  <!-- Section 1: Scan Quality Summary -->
+  <div class="stats-row">
+    <div class="stat-card c-blue">
+      <div class="label">Total Points</div>
+      <div class="value" id="stat-total-points">--</div>
+      <div class="sub">Scan point cloud</div>
+    </div>
+    <div class="stat-card c-green">
+      <div class="label">Alignment RMSE</div>
+      <div class="value" id="stat-rmse">--</div>
+      <div class="sub">mm (scan-to-CAD)</div>
+    </div>
+    <div class="stat-card c-amber">
+      <div class="label">Deviation Range</div>
+      <div class="value" id="stat-dev-range">--</div>
+      <div class="sub" id="stat-dev-range-sub">min to max (mm)</div>
+    </div>
+    <div class="stat-card c-red">
+      <div class="label">Point Density</div>
+      <div class="value" id="stat-density">--</div>
+      <div class="sub">pts / mm^2 (estimate)</div>
+    </div>
+  </div>
+
+  <!-- Section 2: Deviation Distribution -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Deviation Distribution</h2>
+      <span class="card-sub">Signed deviation histogram with Gaussian fit</span>
+    </div>
+    <div class="card-body">
+      <div id="plot-deviation-hist" class="plot-container-lg"></div>
+    </div>
+  </div>
+
+  <!-- Section 3: Per-Foil Deviation Statistics -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Per-Foil Deviation Statistics</h2>
+      <span class="card-sub">Mean, max, and std deviation per foil (color-coded by disposition)</span>
+    </div>
+    <div class="card-body">
+      <div id="plot-foil-stats" class="plot-container-lg"></div>
+    </div>
+  </div>
+
+  <!-- Section 4: Zone Coverage Analysis -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Zone Coverage Analysis</h2>
+      <span class="card-sub">Per-zone defect aggregation and severity</span>
+    </div>
+    <div class="card-body">
+      <div class="table-scroll">
+        <table id="zone-table">
+          <thead>
+            <tr>
+              <th>Zone ID</th>
+              <th>Zone Name</th>
+              <th>Defect Count</th>
+              <th>Max Depth (mm)</th>
+              <th>Avg Depth (mm)</th>
+              <th>Coverage %</th>
+              <th>Severity</th>
+            </tr>
+          </thead>
+          <tbody id="zone-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5: Pipeline Performance -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <h2>Pipeline Performance</h2>
+        <span class="card-sub">Per-phase timing breakdown</span>
+      </div>
+      <div class="card-body">
+        <div id="plot-pipeline" class="plot-container"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h2>Pipeline Summary</h2>
+      </div>
+      <div class="card-body">
+        <table id="pipeline-summary-table">
+          <tbody>
+            <tr><td style="color:var(--text-muted); width:180px;">Total Pipeline Time</td><td id="pipeline-total" class="mono">--</td></tr>
+            <tr><td style="color:var(--text-muted)">Target per IBR</td><td class="mono">&lt; 90 s</td></tr>
+            <tr><td style="color:var(--text-muted)">Status</td><td id="pipeline-status-badge">--</td></tr>
+            <tr><td style="color:var(--text-muted)">Phases Completed</td><td id="pipeline-phases" class="mono">--</td></tr>
+            <tr><td style="color:var(--text-muted)">Slowest Phase</td><td id="pipeline-slowest" class="mono">--</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Empty state when no data -->
+<div class="container" id="empty-content" style="display:none;">
+  <div class="empty-state">
+    <h3>No Report Data Available</h3>
+    <p>Run the pipeline to generate inspection data, then return here to view 3D point cloud metrics.</p>
+  </div>
+</div>
+
+<script>
+const PLOT_LAYOUT = {
+  paper_bgcolor: '#131a2b', plot_bgcolor: '#131a2b',
+  font: { color: '#e2e8f0', family: 'Segoe UI, system-ui, sans-serif', size: 12 },
+  margin: { t: 30, b: 50, l: 60, r: 20 },
+  xaxis: { gridcolor: '#2a3654', zerolinecolor: '#2a3654' },
+  yaxis: { gridcolor: '#2a3654', zerolinecolor: '#2a3654' },
+};
+const PLOTLY_CFG = { responsive: true, displayModeBar: false };
+
+const DISP_COLOR = {
+  'SERVICEABLE': '#22c55e',
+  'BLEND': '#f59e0b',
+  'REPLACE': '#ef4444',
+  'N/A': '#8892a4',
+};
+
+const ZONE_NAMES = {
+  'Z01': 'Leading Edge Root', 'Z02': 'Leading Edge Mid', 'Z03': 'Leading Edge Tip',
+  'Z04': 'Pressure Surface Root', 'Z05': 'Pressure Surface Mid', 'Z06': 'Pressure Surface Tip',
+  'Z07': 'Suction Surface Root', 'Z08': 'Suction Surface Mid', 'Z09': 'Suction Surface Tip',
+  'Z10': 'Trailing Edge Root', 'Z11': 'Trailing Edge Mid', 'Z12': 'Trailing Edge Tip',
+  'Z13': 'Root Fillet Leading', 'Z14': 'Root Fillet Trailing', 'Z15': 'Tip Cap',
+  'Z16': 'Platform Leading', 'Z17': 'Platform Trailing', 'Z18': 'Platform Pressure',
+  'Z19': 'Platform Suction', 'Z20': 'Convex Transition', 'Z21': 'Concave Transition',
+  'Z22': 'Mid-span Leading', 'Z23': 'Mid-span Trailing', 'Z24': 'Dovetail Region',
+};
+
+function showLoading(msg) {
+  document.getElementById('loading-text').textContent = msg || 'Loading...';
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('show');
+}
+
+function fmt(n, d) {
+  if (n == null || isNaN(n)) return '--';
+  return Number(n).toFixed(d != null ? d : 2);
+}
+function fmtInt(n) {
+  if (n == null || isNaN(n)) return '--';
+  return Number(n).toLocaleString();
+}
+
+function gaussianPdf(x, mean, std) {
+  return (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / std, 2));
+}
+
+async function init() {
+  showLoading('Fetching report data...');
+  let report, zoneData;
+  try {
+    const [rRes, zRes] = await Promise.all([
+      fetch('/api/report/latest'),
+      fetch('/api/zone-map/data'),
+    ]);
+    if (!rRes.ok) throw new Error('No report data');
+    report = await rRes.json();
+    zoneData = zRes.ok ? await zRes.json() : null;
+  } catch (e) {
+    hideLoading();
+    document.getElementById('empty-content').style.display = '';
+    return;
+  }
+
+  document.getElementById('main-content').style.display = '';
+
+  const defects = report.defects || [];
+  const partNum = report.part_number || 'Unknown';
+  document.getElementById('part-label').textContent = 'Part ' + partNum;
+
+  // ---- Section 1: Scan Quality Summary ----
+  const scanData = report.scan_data || report.scan_statistics || {};
+  const totalPoints = scanData.total_points || scanData.point_count || report.total_scan_points || 0;
+  const rmse = report.alignment_rmse_mm || report.rmse_mm || 0;
+
+  const allDepths = defects.map(function(d) { return (d.depth_mm != null ? d.depth_mm : (d.depth_in || 0) * 25.4); });
+  const devMin = allDepths.length > 0 ? Math.min.apply(null, allDepths) : 0;
+  const devMax = allDepths.length > 0 ? Math.max.apply(null, allDepths) : 0;
+
+  const bbox = scanData.bounding_box || {};
+  var surfaceArea = scanData.surface_area_mm2 || 0;
+  if (!surfaceArea && bbox.x_range && bbox.y_range) {
+    surfaceArea = bbox.x_range * bbox.y_range;
+  }
+  var density = totalPoints > 0 && surfaceArea > 0 ? totalPoints / surfaceArea : 0;
+
+  document.getElementById('stat-total-points').textContent = fmtInt(totalPoints);
+  document.getElementById('stat-rmse').textContent = fmt(rmse, 4);
+  document.getElementById('stat-dev-range').textContent = fmt(devMin, 3) + ' / ' + fmt(devMax, 3);
+  document.getElementById('stat-dev-range-sub').textContent = 'min / max deviation (mm)';
+  document.getElementById('stat-density').textContent = density > 0 ? fmt(density, 1) : '--';
+
+  // ---- Section 2: Deviation Distribution ----
+  var signedDevs = defects.map(function(d) {
+    if (d.signed_deviation_mm != null) return d.signed_deviation_mm;
+    var depth = d.depth_mm != null ? d.depth_mm : (d.depth_in || 0) * 25.4;
+    return d.disposition === 'SERVICEABLE' ? -Math.abs(depth) : depth;
+  });
+  if (signedDevs.length === 0) signedDevs = [0];
+
+  var mean = signedDevs.reduce(function(a, b) { return a + b; }, 0) / signedDevs.length;
+  var variance = signedDevs.reduce(function(a, b) { return a + (b - mean) * (b - mean); }, 0) / signedDevs.length;
+  var std = Math.sqrt(variance) || 0.001;
+
+  var histTraces = [{
+    x: signedDevs,
+    type: 'histogram',
+    nbinsx: 40,
+    marker: { color: 'rgba(59,130,246,0.6)', line: { color: '#3b82f6', width: 1 } },
+    name: 'Deviation',
+    histnorm: 'probability density',
+  }];
+
+  var xFit = [];
+  var yFit = [];
+  var lo = mean - 4 * std;
+  var hi = mean + 4 * std;
+  for (var i = 0; i <= 100; i++) {
+    var xv = lo + (hi - lo) * i / 100;
+    xFit.push(xv);
+    yFit.push(gaussianPdf(xv, mean, std));
+  }
+  histTraces.push({
+    x: xFit, y: yFit,
+    type: 'scatter', mode: 'lines',
+    line: { color: '#f59e0b', width: 2 },
+    name: 'Gaussian Fit (mu=' + fmt(mean, 3) + ', sigma=' + fmt(std, 3) + ')',
+  });
+
+  var defectThreshold = report.defect_threshold_mm || 0.1;
+  var histLayout = Object.assign({}, PLOT_LAYOUT, {
+    xaxis: Object.assign({}, PLOT_LAYOUT.xaxis, { title: 'Signed Deviation (mm)' }),
+    yaxis: Object.assign({}, PLOT_LAYOUT.yaxis, { title: 'Probability Density' }),
+    shapes: [{
+      type: 'line', x0: defectThreshold, x1: defectThreshold, y0: 0, y1: 1,
+      yref: 'paper', line: { color: '#ef4444', width: 2, dash: 'dash' },
+    }, {
+      type: 'line', x0: -defectThreshold, x1: -defectThreshold, y0: 0, y1: 1,
+      yref: 'paper', line: { color: '#ef4444', width: 2, dash: 'dash' },
+    }],
+    annotations: [{
+      x: defectThreshold, y: 1, yref: 'paper', xanchor: 'left',
+      text: '  Defect Threshold (' + fmt(defectThreshold, 2) + ' mm)',
+      showarrow: false, font: { color: '#ef4444', size: 11 },
+    }],
+    legend: { x: 0.01, y: 0.99, bgcolor: 'rgba(19,26,43,0.8)', font: { size: 11 } },
+    barmode: 'overlay',
+  });
+  Plotly.newPlot('plot-deviation-hist', histTraces, histLayout, PLOTLY_CFG);
+
+  // ---- Section 3: Per-Foil Deviation Statistics ----
+  var foilMap = {};
+  defects.forEach(function(d) {
+    var fn = d.foil_number || 0;
+    if (!foilMap[fn]) foilMap[fn] = { depths: [], disp: d.disposition || 'N/A' };
+    var depth = d.depth_mm != null ? d.depth_mm : (d.depth_in || 0) * 25.4;
+    foilMap[fn].depths.push(depth);
+    if (d.disposition === 'REPLACE') foilMap[fn].disp = 'REPLACE';
+    else if (d.disposition === 'BLEND' && foilMap[fn].disp !== 'REPLACE') foilMap[fn].disp = 'BLEND';
+  });
+
+  var foilNums = Object.keys(foilMap).map(Number).sort(function(a, b) { return a - b; });
+  if (foilNums.length === 0) foilNums = Array.from({ length: 54 }, function(_, i) { return i + 1; });
+
+  var foilLabels = foilNums.map(function(n) { return 'Foil ' + n; });
+  var meanDevs = foilNums.map(function(n) {
+    var f = foilMap[n]; if (!f) return 0;
+    return f.depths.reduce(function(a, b) { return a + b; }, 0) / f.depths.length;
+  });
+  var maxDevs = foilNums.map(function(n) {
+    var f = foilMap[n]; if (!f) return 0;
+    return Math.max.apply(null, f.depths);
+  });
+  var stdDevs = foilNums.map(function(n) {
+    var f = foilMap[n]; if (!f || f.depths.length < 2) return 0;
+    var m = f.depths.reduce(function(a, b) { return a + b; }, 0) / f.depths.length;
+    var v = f.depths.reduce(function(a, b) { return a + (b - m) * (b - m); }, 0) / f.depths.length;
+    return Math.sqrt(v);
+  });
+  var foilColors = foilNums.map(function(n) {
+    var f = foilMap[n]; return f ? (DISP_COLOR[f.disp] || '#8892a4') : '#2a3654';
+  });
+
+  var foilTraces = [
+    {
+      x: foilLabels, y: meanDevs, name: 'Mean Deviation',
+      type: 'bar', marker: { color: foilColors.map(function(c) { return c + 'cc'; }) },
+    },
+    {
+      x: foilLabels, y: maxDevs, name: 'Max Deviation',
+      type: 'bar', marker: { color: foilColors },
+    },
+    {
+      x: foilLabels, y: stdDevs, name: 'Std Deviation',
+      type: 'bar', marker: { color: foilColors.map(function(c) { return c + '88'; }) },
+    },
+  ];
+  var foilLayout = Object.assign({}, PLOT_LAYOUT, {
+    barmode: 'group',
+    xaxis: Object.assign({}, PLOT_LAYOUT.xaxis, { title: 'Foil Number', tickangle: -45, tickfont: { size: 10 } }),
+    yaxis: Object.assign({}, PLOT_LAYOUT.yaxis, { title: 'Deviation (mm)' }),
+    legend: { x: 0.01, y: 0.99, bgcolor: 'rgba(19,26,43,0.8)', font: { size: 11 } },
+  });
+  Plotly.newPlot('plot-foil-stats', foilTraces, foilLayout, PLOTLY_CFG);
+
+  // ---- Section 4: Zone Coverage Analysis ----
+  var zones = (zoneData && zoneData.zones) || {};
+  var zoneIds = Object.keys(zones).sort();
+  if (zoneIds.length === 0) {
+    zoneIds = Object.keys(ZONE_NAMES).sort();
+  }
+  var totalDefects = report.total_defects || defects.length || 1;
+  var tbody = document.getElementById('zone-tbody');
+  tbody.innerHTML = '';
+
+  var allZoneIds = Object.keys(ZONE_NAMES).sort();
+  allZoneIds.forEach(function(zid) {
+    var z = zones[zid] || { count: 0, max_depth_in: 0 };
+    var count = z.count || 0;
+    var maxDepthIn = z.max_depth_in || 0;
+    var maxDepthMm = maxDepthIn * 25.4;
+
+    var defectDepths = [];
+    defects.forEach(function(d) {
+      var dz = d.zone_ids || d.zones || [];
+      if (dz.indexOf(zid) !== -1) {
+        defectDepths.push(d.depth_mm != null ? d.depth_mm : (d.depth_in || 0) * 25.4);
+      }
+    });
+    var avgDepthMm = defectDepths.length > 0
+      ? defectDepths.reduce(function(a, b) { return a + b; }, 0) / defectDepths.length
+      : 0;
+
+    var coverage = count > 0 ? Math.min(100, (count / totalDefects) * 100) : 0;
+
+    var severity, badgeClass;
+    if (count === 0) { severity = 'None'; badgeClass = 'badge-gray'; }
+    else if (maxDepthMm < 0.05) { severity = 'Low'; badgeClass = 'badge-green'; }
+    else if (maxDepthMm < 0.15) { severity = 'Medium'; badgeClass = 'badge-amber'; }
+    else { severity = 'High'; badgeClass = 'badge-red'; }
+
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="mono">' + zid + '</td>'
+      + '<td>' + (ZONE_NAMES[zid] || zid) + '</td>'
+      + '<td>' + count + '</td>'
+      + '<td class="mono">' + fmt(maxDepthMm, 3) + '</td>'
+      + '<td class="mono">' + fmt(avgDepthMm, 3) + '</td>'
+      + '<td class="mono">' + fmt(coverage, 1) + '%</td>'
+      + '<td><span class="badge ' + badgeClass + '">' + severity + '</span></td>';
+    tbody.appendChild(tr);
+  });
+
+  // ---- Section 5: Pipeline Performance ----
+  var timing = report.pipeline_timing || report.timing || {};
+  var phases = timing.phases || timing.phase_times || {};
+  var totalTime = timing.total_seconds || timing.total_time_s || 0;
+
+  if (typeof phases === 'object' && !Array.isArray(phases)) {
+    var phaseNames = Object.keys(phases);
+    var phaseTimes = phaseNames.map(function(k) { return phases[k]; });
+
+    if (totalTime === 0) {
+      totalTime = phaseTimes.reduce(function(a, b) { return a + b; }, 0);
+    }
+
+    var pipeTraces = [{
+      y: phaseNames, x: phaseTimes,
+      type: 'bar', orientation: 'h',
+      marker: {
+        color: phaseTimes.map(function(t) {
+          return t > 15 ? '#ef4444' : t > 8 ? '#f59e0b' : '#22c55e';
+        }),
+      },
+      text: phaseTimes.map(function(t) { return fmt(t, 1) + 's'; }),
+      textposition: 'auto', textfont: { color: '#e2e8f0', size: 11 },
+      hovertemplate: '%{y}: %{x:.2f}s<extra></extra>',
+    }];
+    var pipeLayout = Object.assign({}, PLOT_LAYOUT, {
+      margin: { t: 10, b: 50, l: 180, r: 30 },
+      xaxis: Object.assign({}, PLOT_LAYOUT.xaxis, { title: 'Time (seconds)' }),
+      yaxis: { automargin: true, gridcolor: '#2a3654' },
+      shapes: [{
+        type: 'line', x0: 90, x1: 90, y0: -0.5, y1: phaseNames.length - 0.5,
+        line: { color: '#ef4444', width: 2, dash: 'dash' },
+      }],
+      annotations: totalTime > 70 ? [{
+        x: 90, y: phaseNames.length - 0.5, xanchor: 'left',
+        text: '  90s target', showarrow: false, font: { color: '#ef4444', size: 11 },
+      }] : [],
+    });
+    Plotly.newPlot('plot-pipeline', pipeTraces, pipeLayout, PLOTLY_CFG);
+
+    document.getElementById('pipeline-total').textContent = fmt(totalTime, 2) + ' s';
+    document.getElementById('pipeline-phases').textContent = phaseNames.length + ' phases';
+
+    var maxPhaseTime = Math.max.apply(null, phaseTimes);
+    var slowestIdx = phaseTimes.indexOf(maxPhaseTime);
+    document.getElementById('pipeline-slowest').textContent = phaseNames[slowestIdx] + ' (' + fmt(maxPhaseTime, 2) + 's)';
+
+    var statusHtml;
+    if (totalTime <= 90) {
+      statusHtml = '<span class="badge badge-green">Within Target</span>';
+    } else {
+      statusHtml = '<span class="badge badge-red">Exceeds Target</span>';
+    }
+    document.getElementById('pipeline-status-badge').innerHTML = statusHtml;
+  } else {
+    document.getElementById('plot-pipeline').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-muted);">No pipeline timing data available</div>';
+    document.getElementById('pipeline-total').textContent = 'N/A';
+    document.getElementById('pipeline-phases').textContent = 'N/A';
+    document.getElementById('pipeline-slowest').textContent = 'N/A';
+    document.getElementById('pipeline-status-badge').innerHTML = '<span class="badge badge-gray">No Data</span>';
+  }
+
+  hideLoading();
+}
+
+init();
+</script>
+
+</body>
+</html>

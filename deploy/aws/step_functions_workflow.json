@@ -1,0 +1,281 @@
+{
+  "Comment": "IBR Defect Extraction Pipeline — Step Functions State Machine. Author: Supreeth Mysore. Program: F135 | Classification: ITAR. This workflow orchestrates the batch inspection pipeline for integrally bladed rotor (IBR) defect analysis. All execution must occur in ITAR-compliant AWS regions (us-east-1, us-west-2).",
+  "StartAt": "ValidateInput",
+  "TimeoutSeconds": 3600,
+  "States": {
+    "ValidateInput": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:ibr-validate-input",
+      "Comment": "Validates PLY file integrity, part number format, and ITAR region compliance",
+      "TimeoutSeconds": 900,
+      "HeartbeatSeconds": 60,
+      "Parameters": {
+        "bucket.$": "$.bucket",
+        "scan_key.$": "$.scan_key",
+        "cad_key.$": "$.cad_key",
+        "part_number.$": "$.part_number",
+        "stage_id.$": "$.stage_id",
+        "program": "F135",
+        "itar_regions": ["us-east-1", "us-west-2"]
+      },
+      "ResultPath": "$.validation",
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["ValidationError"],
+          "ResultPath": "$.error",
+          "Next": "HandleValidationFailure"
+        },
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "HandlePipelineError"
+        }
+      ],
+      "Next": "PrepareData"
+    },
+
+    "PrepareData": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:ibr-prepare-data",
+      "Comment": "Downloads PLY files from S3, runs voxel downsampling and outlier removal per pipeline_config",
+      "TimeoutSeconds": 900,
+      "HeartbeatSeconds": 120,
+      "Parameters": {
+        "bucket.$": "$.bucket",
+        "scan_key.$": "$.scan_key",
+        "cad_key.$": "$.cad_key",
+        "part_number.$": "$.part_number",
+        "validation.$": "$.validation",
+        "config": {
+          "voxel_size_mm": 0.5,
+          "statistical_outlier_neighbors": 20,
+          "statistical_outlier_std": 2.5,
+          "min_points": 10000,
+          "max_points": 20000000
+        }
+      },
+      "ResultPath": "$.preparation",
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "States.TaskFailed"],
+          "IntervalSeconds": 10,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "HandlePipelineError"
+        }
+      ],
+      "Next": "RunPipeline"
+    },
+
+    "RunPipeline": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Comment": "Executes the 8-phase defect extraction pipeline as an ECS Fargate task. Timeout 900s matches pipeline_config.performance.max_time_per_ibr_seconds.",
+      "TimeoutSeconds": 900,
+      "HeartbeatSeconds": 120,
+      "Parameters": {
+        "LaunchType": "FARGATE",
+        "Cluster": "arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:cluster/ibr-defect-cluster",
+        "TaskDefinition": "arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/ibr-defect-pipeline:latest",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "Subnets": ["${PRIVATE_SUBNET_1}", "${PRIVATE_SUBNET_2}"],
+            "SecurityGroups": ["${PIPELINE_SG}"],
+            "AssignPublicIp": "DISABLED"
+          }
+        },
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "ibr-pipeline",
+              "Command": [
+                "python", "-m", "src.pipeline",
+                "--scan-s3", "$.preparation.scan_local_path",
+                "--cad-s3", "$.preparation.cad_local_path",
+                "--part-number.$", "$.part_number",
+                "--config", "/app/config/pipeline_config.yaml",
+                "--output-s3", "$.bucket"
+              ],
+              "Environment": [
+                {"Name": "PART_NUMBER", "Value.$": "$.part_number"},
+                {"Name": "S3_BUCKET", "Value.$": "$.bucket"},
+                {"Name": "EXECUTION_ID", "Value.$": "$$.Execution.Id"}
+              ]
+            }
+          ]
+        },
+        "Tags": [
+          {"Key": "Program", "Value": "F135"},
+          {"Key": "Classification", "Value": "ITAR"},
+          {"Key": "PartNumber", "Value.$": "$.part_number"}
+        ]
+      },
+      "ResultPath": "$.pipeline_result",
+      "Retry": [
+        {
+          "ErrorEquals": ["ECS.AmazonECSException"],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.TaskFailed", "States.Timeout"],
+          "ResultPath": "$.error",
+          "Next": "HandlePipelineError"
+        },
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "HandlePipelineError"
+        }
+      ],
+      "Next": "GenerateReport"
+    },
+
+    "GenerateReport": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:ibr-generate-report",
+      "Comment": "Generates Excel/JSON/PPTX reports and uploads to S3. Includes zone classification, disposition, and defect measurements.",
+      "TimeoutSeconds": 900,
+      "HeartbeatSeconds": 60,
+      "Parameters": {
+        "bucket.$": "$.bucket",
+        "part_number.$": "$.part_number",
+        "pipeline_result.$": "$.pipeline_result",
+        "execution_id.$": "$$.Execution.Id",
+        "report_formats": ["json", "excel", "pptx"],
+        "include_visualizations": true
+      },
+      "ResultPath": "$.report",
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException"],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "HandlePipelineError"
+        }
+      ],
+      "Next": "NotifyComplete"
+    },
+
+    "NotifyComplete": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Comment": "Sends completion notification via SNS with report summary",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:ibr-defect-notifications",
+        "Subject": "IBR Pipeline Complete",
+        "Message": {
+          "status": "COMPLETE",
+          "part_number.$": "$.part_number",
+          "execution_id.$": "$$.Execution.Id",
+          "report_location.$": "$.report.s3_path",
+          "total_defects.$": "$.report.total_defects",
+          "overall_disposition.$": "$.report.overall_disposition",
+          "program": "F135",
+          "timestamp.$": "$$.State.EnteredTime"
+        },
+        "MessageAttributes": {
+          "program": {
+            "DataType": "String",
+            "StringValue": "F135"
+          },
+          "classification": {
+            "DataType": "String",
+            "StringValue": "ITAR"
+          }
+        }
+      },
+      "ResultPath": "$.notification",
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "PipelineSucceeded"
+        }
+      ],
+      "Next": "PipelineSucceeded"
+    },
+
+    "PipelineSucceeded": {
+      "Type": "Succeed",
+      "Comment": "Pipeline completed successfully"
+    },
+
+    "HandleValidationFailure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Comment": "Notifies on validation failure — bad PLY file, invalid part number, or ITAR region violation",
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:ibr-defect-notifications",
+        "Subject": "IBR Pipeline — Validation Failed",
+        "Message": {
+          "status": "VALIDATION_FAILED",
+          "part_number.$": "$.part_number",
+          "execution_id.$": "$$.Execution.Id",
+          "error.$": "$.error",
+          "program": "F135"
+        }
+      },
+      "ResultPath": "$.failure_notification",
+      "Next": "PipelineFailed"
+    },
+
+    "HandlePipelineError": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Comment": "Notifies on pipeline execution error with full error context",
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:ibr-defect-notifications",
+        "Subject": "IBR Pipeline — Execution Error",
+        "Message": {
+          "status": "ERROR",
+          "part_number.$": "$.part_number",
+          "execution_id.$": "$$.Execution.Id",
+          "error.$": "$.error",
+          "program": "F135"
+        }
+      },
+      "ResultPath": "$.failure_notification",
+      "Next": "PipelineFailed"
+    },
+
+    "PipelineFailed": {
+      "Type": "Fail",
+      "Error": "PipelineExecutionFailed",
+      "Cause": "IBR defect extraction pipeline failed. Check CloudWatch logs and error details in the execution history."
+    }
+  }
+}

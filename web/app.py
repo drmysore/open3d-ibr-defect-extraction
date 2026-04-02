@@ -194,6 +194,11 @@ async def defect_library_page(request: Request):
     return _render(request, "defect_library.html")
 
 
+@app.get("/metrics-3d", response_class=HTMLResponse)
+async def metrics_3d_page(request: Request):
+    return _render(request, "metrics_3d.html")
+
+
 # ----- API Endpoints -----
 
 @app.get("/api/report/latest")
