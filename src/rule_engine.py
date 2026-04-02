@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from collections import defaultdict
 from typing import Any, Sequence
 
@@ -816,3 +817,579 @@ class RuleEngine:
         for d in defects:
             summary[d.get("disposition", "UNKNOWN")] += 1
         return dict(summary)
+
+    # ------------------------------------------------------------------
+    # LLM logic-block evaluation
+    # ------------------------------------------------------------------
+
+    _CONDITION_PATTERNS: list[tuple[str, str]] = [
+        (r"damage\s+contacting\s+(.*?)(?:\s*\(|$)", "location"),
+        (r"extending\s+into\s+(.*?)\)", "extent"),
+        (r"depth\s*(?:greater|more|>)\s*(?:than\s+)?([\d.]+)", "min_depth"),
+        (r"depth\s*(?:less|fewer|<)\s*(?:than\s+)?([\d.]+)", "max_depth"),
+        (r"sharp[\s_-]*bottom", "sharp_bottom"),
+        (r"round[\s_-]*bottom", "round_bottom"),
+        (r"crosses?\s+(?:the\s+)?edge", "crosses_edge"),
+    ]
+
+    def evaluate_logic_block(self, defect: dict, rule: dict) -> str:
+        """Process a Llama3-emitted ``logic`` block against *defect*.
+
+        The *rule* dict is expected to contain a ``logic`` key shaped as::
+
+            {
+                "if_condition": "<natural-language predicate>",
+                "then": "<action or limit description>",
+                "else": "<action or '-1' for not-applicable>"
+            }
+
+        Returns ``SERVICEABLE``, ``BLEND``, or ``REPLACE``.
+        """
+        logic = rule.get("logic")
+        if logic is None:
+            return "SERVICEABLE"
+
+        condition_text = str(logic.get("if_condition", "")).lower()
+        then_text = str(logic.get("then", "")).lower()
+        else_text = str(logic.get("else", "")).lower()
+
+        condition_met = self._evaluate_condition(defect, condition_text)
+
+        branch = then_text if condition_met else else_text
+
+        if branch in ("-1", "n/a", "not applicable", ""):
+            return "SERVICEABLE"
+
+        return self._interpret_branch(defect, branch)
+
+    def _evaluate_condition(self, defect: dict, condition: str) -> bool:
+        """Parse natural-language *condition* and test it against *defect*."""
+        props: dict[str, Any] = {}
+        for pattern, key in self._CONDITION_PATTERNS:
+            m = re.search(pattern, condition, re.IGNORECASE)
+            if m:
+                props[key] = m.group(1).strip() if m.lastindex else True
+
+        if "location" in props:
+            defect_loc = str(_get(defect, "location", "")).lower()
+            if props["location"].lower() not in defect_loc:
+                return False
+
+        if "extent" in props:
+            extent_desc = props["extent"].lower()
+            defect_extent = str(_get(defect, "extent", "")).lower()
+            for keyword in ("concave", "convex", "both"):
+                if keyword in extent_desc and keyword not in defect_extent:
+                    return False
+
+        if "min_depth" in props:
+            if _get(defect, "depth_in", 0.0) <= float(props["min_depth"]):
+                return False
+
+        if "max_depth" in props:
+            if _get(defect, "depth_in", 0.0) >= float(props["max_depth"]):
+                return False
+
+        if "sharp_bottom" in props:
+            if not _get(defect, "sharp_bottom", False):
+                return False
+
+        if "round_bottom" in props:
+            if not _get(defect, "round_bottom", False):
+                return False
+
+        if "crosses_edge" in props:
+            if not _get(defect, "crosses_edge", False):
+                return False
+
+        return True
+
+    @staticmethod
+    def _interpret_branch(defect: dict, branch: str) -> str:
+        """Derive a disposition from a ``then``/``else`` branch string."""
+        if "replace" in branch:
+            return "REPLACE"
+        if "blend" in branch:
+            return "BLEND"
+
+        limit_match = re.search(r"([\d.]+)\s*(?:inch|in\.?|\")", branch)
+        if limit_match:
+            limit_val = float(limit_match.group(1))
+            check_match = re.search(
+                r"(?:maximum|max|limit)\s+(\w+)", branch
+            )
+            if check_match:
+                dim_name = check_match.group(1).lower()
+                dim_keys = {
+                    "depth": "depth_in",
+                    "length": "length_in",
+                    "width": "width_in",
+                }
+                key = dim_keys.get(dim_name, "depth_in")
+            else:
+                key = "depth_in"
+
+            actual = _get(defect, key, 0.0)
+            if actual > limit_val:
+                return "REPLACE"
+            return "SERVICEABLE"
+
+        if "serviceable" in branch or "acceptable" in branch:
+            return "SERVICEABLE"
+
+        return "SERVICEABLE"
+
+    # ------------------------------------------------------------------
+    # Multi-rule chain evaluation
+    # ------------------------------------------------------------------
+
+    def evaluate_chain(self, defect: dict, rule_blocks: list[dict]) -> str:
+        """Evaluate a sequence of rule blocks in priority order.
+
+        Priority blocks (those with ``"priority": true`` or containing
+        ``sharp_bottom`` / ``cannot_cross`` keys) are evaluated first.
+        If any priority rule triggers REPLACE, evaluation short-circuits.
+        Remaining blocks are processed sequentially and the worst
+        disposition across all blocks is returned.
+
+        Parameters
+        ----------
+        defect : dict
+            The defect under evaluation.
+        rule_blocks : list[dict]
+            Rule blocks, each containing ``rules`` and optional ``priority``.
+
+        Returns
+        -------
+        str
+            ``SERVICEABLE``, ``BLEND``, or ``REPLACE``.
+        """
+        priority_blocks: list[dict] = []
+        normal_blocks: list[dict] = []
+
+        for block in rule_blocks:
+            is_priority = block.get("priority", False)
+            if not is_priority:
+                for r in block.get("rules", []):
+                    if r.get("sharp_bottom_serviceable") is not None or r.get("cannot_cross"):
+                        is_priority = True
+                        break
+            (priority_blocks if is_priority else normal_blocks).append(block)
+
+        disposition = "SERVICEABLE"
+
+        for block in priority_blocks:
+            for rule in block.get("rules", []):
+                result = self._evaluate_chain_rule(defect, rule)
+                if result == "REPLACE":
+                    logger.debug(
+                        "%s: priority rule %s → REPLACE (chain short-circuit)",
+                        defect.get("defect_id"),
+                        rule.get("rule_id", "?"),
+                    )
+                    return "REPLACE"
+                disposition = _worst(disposition, result)
+
+        for block in normal_blocks:
+            for rule in block.get("rules", []):
+                result = self._evaluate_chain_rule(defect, rule)
+                disposition = _worst(disposition, result)
+                if disposition == "REPLACE":
+                    return "REPLACE"
+
+        return disposition
+
+    def _evaluate_chain_rule(self, defect: dict, rule: dict) -> str:
+        """Evaluate a single rule within a chain context.
+
+        Handles both traditional limit-based rules and LLM ``logic`` blocks.
+        """
+        if rule.get("logic"):
+            return self.evaluate_logic_block(defect, rule)
+
+        if not _get(rule, "sharp_bottom_serviceable", True):
+            if _get(defect, "sharp_bottom", False):
+                return "REPLACE"
+
+        if _get(rule, "cannot_cross", False):
+            if _get(defect, "crosses_edge", False):
+                return "REPLACE"
+
+        max_depth = _get(rule, "max_depth_in")
+        if max_depth is not None:
+            depth = _get(defect, "depth_in", 0.0)
+            if depth > max_depth * self.blend_multiplier:
+                return "REPLACE"
+            if depth > max_depth:
+                return "BLEND"
+
+        max_length = _get(rule, "max_length_in")
+        if max_length is not None:
+            length = _get(defect, "length_in", 0.0)
+            if length > max_length * self.blend_multiplier:
+                return "REPLACE"
+            if length > max_length:
+                return "BLEND"
+
+        if rule.get("serviceable") is False:
+            return "REPLACE"
+
+        return "SERVICEABLE"
+
+    # ------------------------------------------------------------------
+    # Separation distance computation
+    # ------------------------------------------------------------------
+
+    def compute_separation_distance(
+        self, defect: dict, peers: list[dict]
+    ) -> float | None:
+        """Compute the nearest Euclidean distance between *defect* and *peers*.
+
+        Supports dynamic thresholds such as
+        ``"more than depth of deepest flaw present"`` when used downstream.
+
+        Parameters
+        ----------
+        defect : dict
+            Must contain ``centroid_mm`` (list/tuple of coordinates).
+        peers : list[dict]
+            Peer defects, each with ``centroid_mm``.
+
+        Returns
+        -------
+        float or None
+            Nearest distance in **inches**, or ``None`` if centroids are
+            missing.
+        """
+        c = _get(defect, "centroid_mm")
+        if c is None:
+            return None
+
+        valid_peers = [p for p in peers if _get(p, "centroid_mm") is not None]
+        if not valid_peers:
+            return None
+
+        ref = np.asarray(c, dtype=float).reshape(1, -1)
+        pts = np.asarray(
+            [p["centroid_mm"] for p in valid_peers], dtype=float
+        )
+        if pts.ndim == 1:
+            pts = pts.reshape(1, -1)
+
+        dists_in = cdist(ref, pts).ravel() / MM_PER_INCH
+        return float(np.min(dists_in))
+
+    def resolve_dynamic_threshold(
+        self, spec: str | float, defect: dict, peers: list[dict]
+    ) -> float | None:
+        """Resolve a separation threshold specification.
+
+        Parameters
+        ----------
+        spec : str or float
+            A numeric value (e.g. ``0.250``) or a dynamic rule string like
+            ``"more than depth of deepest flaw present"``.
+        defect : dict
+            The defect under evaluation.
+        peers : list[dict]
+            Peer defects.
+
+        Returns
+        -------
+        float or None
+            Resolved threshold in inches.
+        """
+        if isinstance(spec, (int, float)):
+            return float(spec)
+
+        if isinstance(spec, str):
+            depths = [_get(d, "depth_in", 0.0) for d in peers]
+            depths.append(_get(defect, "depth_in", 0.0))
+            deepest = max(depths) if depths else 0.0
+
+            lowered = spec.lower()
+            if "deepest" in lowered or "deepest flaw" in lowered:
+                fixed_match = re.search(r"([\d.]+)", spec)
+                if fixed_match:
+                    return max(deepest, float(fixed_match.group(1)))
+                return deepest
+
+            numeric = re.search(r"([\d.]+)", spec)
+            if numeric:
+                return float(numeric.group(1))
+
+        return None
+
+    # ------------------------------------------------------------------
+    # Scratch merge (public API)
+    # ------------------------------------------------------------------
+
+    def merge_scratches(self, defects: list[dict]) -> list[dict]:
+        """Merge nearby scratches per IBR rules.
+
+        Implements: *"For scratches more than 0.001 inch depth that are
+        separated by less than 0.015 inch, consider as single scratch by
+        adding their lengths."*
+
+        Uses union-find to cluster qualifying scratches, sums their lengths
+        into the group representative, and marks the rest as merged.
+
+        Parameters
+        ----------
+        defects : list[dict]
+            Full defect list (modified in place; merged entries receive
+            ``_merged_into`` and ``disposition = "MERGED"``).
+
+        Returns
+        -------
+        list[dict]
+            The surviving (non-merged) defects.
+        """
+        DEPTH_GATE = 0.001
+        SEP_THRESHOLD = 0.015
+
+        scratches = [
+            d for d in defects
+            if _get(d, "classified_type", "").lower() in ("scratch", "scratches")
+            and _get(d, "depth_in", 0.0) > DEPTH_GATE
+            and _get(d, "centroid_mm") is not None
+            and not d.get("_merged_into")
+        ]
+
+        if len(scratches) < 2:
+            return [d for d in defects if not d.get("_merged_into")]
+
+        centroids = np.array(
+            [d["centroid_mm"] for d in scratches], dtype=float
+        )
+        dists_in = cdist(centroids, centroids) / MM_PER_INCH
+
+        parent = list(range(len(scratches)))
+
+        def _find(x: int) -> int:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def _union(a: int, b: int) -> None:
+            ra, rb = _find(a), _find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        for i in range(len(scratches)):
+            for j in range(i + 1, len(scratches)):
+                if _get(scratches[i], "foil_number") != _get(scratches[j], "foil_number"):
+                    continue
+                if dists_in[i, j] < SEP_THRESHOLD:
+                    _union(i, j)
+
+        groups: dict[int, list[int]] = defaultdict(list)
+        for i in range(len(scratches)):
+            groups[_find(i)].append(i)
+
+        for root, members in groups.items():
+            if len(members) <= 1:
+                continue
+            survivor = scratches[root]
+            total_length = _get(survivor, "length_in", 0.0)
+            max_depth = _get(survivor, "depth_in", 0.0)
+            for idx in members:
+                if idx == root:
+                    continue
+                merged = scratches[idx]
+                total_length += _get(merged, "length_in", 0.0)
+                max_depth = max(max_depth, _get(merged, "depth_in", 0.0))
+                merged["_merged_into"] = survivor.get("defect_id")
+                merged["disposition"] = "MERGED"
+                merged["rule_applied"] = (
+                    f"Scratch merge into {survivor.get('defect_id')}"
+                )
+            survivor["length_in"] = total_length
+            survivor["depth_in"] = max_depth
+            survivor["_merge_count"] = len(members)
+            logger.info(
+                "merge_scratches: merged %d scratches into %s "
+                "(length=%.4f in, depth=%.4f in)",
+                len(members),
+                survivor.get("defect_id"),
+                total_length,
+                max_depth,
+            )
+
+        return [d for d in defects if not d.get("_merged_into")]
+
+    # ------------------------------------------------------------------
+    # Visual separation check
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def check_visual_separation(
+        defects: list[dict], min_threshold_mm: float = 1.0,
+    ) -> bool:
+        """Check whether *defects* are visually separated.
+
+        Implements the rule: *"separation limit does not apply as long as
+        defects are visually separated."*  Defects are considered visually
+        separated when every pair has distinct centroids farther apart than
+        *min_threshold_mm* millimetres.
+
+        Parameters
+        ----------
+        defects : list[dict]
+            Defects to check, each with ``centroid_mm``.
+        min_threshold_mm : float
+            Minimum distance in mm to consider two defects visually distinct.
+
+        Returns
+        -------
+        bool
+            ``True`` if all defect pairs are visually separated.
+        """
+        centroids = [
+            _get(d, "centroid_mm")
+            for d in defects
+            if _get(d, "centroid_mm") is not None
+        ]
+        if len(centroids) < 2:
+            return True
+
+        pts = np.asarray(centroids, dtype=float)
+        if pts.ndim == 1:
+            pts = pts.reshape(1, -1)
+        dists = cdist(pts, pts)
+
+        n = len(centroids)
+        for i in range(n):
+            for j in range(i + 1, n):
+                if dists[i, j] < min_threshold_mm:
+                    return False
+        return True
+
+    # ------------------------------------------------------------------
+    # Evaluation trace (public API)
+    # ------------------------------------------------------------------
+
+    def get_evaluation_trace(self, defect: dict) -> list[dict]:
+        """Return a step-by-step trace of how *defect* was (or would be)
+        evaluated.
+
+        Each entry in the returned list is a dict with:
+
+        - ``step``       – 1-based ordinal
+        - ``rule_id``    – the rule that was checked
+        - ``block_id``   – parent block id
+        - ``check``      – human-readable description of the check
+        - ``result``     – ``"PASS"`` or ``"FAIL"``
+        - ``disposition``– disposition produced by this rule
+        - ``cumulative`` – running worst disposition up to this step
+
+        The last entry always carries the final disposition.
+
+        Parameters
+        ----------
+        defect : dict
+            Must contain at least ``classified_type`` and ``zone_ids``.
+
+        Returns
+        -------
+        list[dict]
+            Ordered trace entries.
+        """
+        defect_type = _get(defect, "classified_type", "unknown")
+        zone_ids: list[str] = _get(defect, "zone_ids", [])
+        entries = self._find_matching_entries(zone_ids, defect_type)
+
+        if not entries:
+            return [
+                {
+                    "step": 1,
+                    "rule_id": None,
+                    "block_id": None,
+                    "check": "No matching rules for type/zone",
+                    "result": "PASS",
+                    "disposition": "SERVICEABLE",
+                    "cumulative": "SERVICEABLE",
+                }
+            ]
+
+        priority_entries = [e for e in entries if e["block"].get("priority")]
+        normal_entries = [e for e in entries if not e["block"].get("priority")]
+        ordered = priority_entries + normal_entries
+
+        trace: list[dict] = []
+        cumulative = "SERVICEABLE"
+
+        for step_num, entry in enumerate(ordered, start=1):
+            rule = entry["rule"]
+            block = entry["block"]
+            rule_id = rule.get("rule_id", "?")
+            block_id = block.get("block_id", "?")
+
+            checks_performed: list[str] = []
+            step_disposition = "SERVICEABLE"
+
+            if rule.get("serviceable") is False:
+                checks_performed.append("serviceable=false flag")
+                step_disposition = "REPLACE"
+
+            elif not _get(rule, "sharp_bottom_serviceable", True):
+                checks_performed.append("sharp_bottom check")
+                if _get(defect, "sharp_bottom", False):
+                    step_disposition = "REPLACE"
+
+            if step_disposition == "SERVICEABLE":
+                max_depth = _get(rule, "max_depth_in")
+                if max_depth is not None:
+                    depth = _get(defect, "depth_in", 0.0)
+                    checks_performed.append(
+                        f"depth {depth:.4f} vs limit {max_depth:.4f}"
+                    )
+                    if depth > max_depth * self.blend_multiplier:
+                        step_disposition = "REPLACE"
+                    elif depth > max_depth:
+                        step_disposition = "BLEND"
+
+            if step_disposition == "SERVICEABLE":
+                max_length = _get(rule, "max_length_in")
+                if max_length is not None:
+                    length = _get(defect, "length_in", 0.0)
+                    checks_performed.append(
+                        f"length {length:.4f} vs limit {max_length:.4f}"
+                    )
+                    if length > max_length * self.blend_multiplier:
+                        step_disposition = "REPLACE"
+                    elif length > max_length:
+                        step_disposition = "BLEND"
+
+            if step_disposition == "SERVICEABLE" and _get(rule, "cannot_cross", False):
+                checks_performed.append("cannot_cross edge check")
+                if _get(defect, "crosses_edge", False):
+                    step_disposition = "REPLACE"
+
+            if step_disposition == "SERVICEABLE" and rule.get("logic"):
+                checks_performed.append("LLM logic block evaluation")
+                step_disposition = self.evaluate_logic_block(defect, rule)
+
+            if not checks_performed:
+                checks_performed.append("all dimensional checks passed")
+
+            result = "FAIL" if step_disposition != "SERVICEABLE" else "PASS"
+            cumulative = _worst(cumulative, step_disposition)
+
+            trace.append(
+                {
+                    "step": step_num,
+                    "rule_id": rule_id,
+                    "block_id": block_id,
+                    "check": "; ".join(checks_performed),
+                    "result": result,
+                    "disposition": step_disposition,
+                    "cumulative": cumulative,
+                }
+            )
+
+            if cumulative == "REPLACE":
+                break
+
+        return trace

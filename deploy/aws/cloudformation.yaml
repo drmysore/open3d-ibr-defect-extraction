@@ -1,0 +1,795 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  IBR Defect Extraction System — Core Infrastructure
+  Author: Supreeth Mysore | Program: F135 | Classification: ITAR
+
+  ITAR NOTICE: This template provisions infrastructure for processing technical
+  data subject to the International Traffic in Arms Regulations (ITAR),
+  22 CFR Parts 120-130. All resources MUST deploy in ITAR-compliant AWS regions
+  (us-east-1, us-west-2). Access restricted to U.S. Persons per 22 CFR 120.15.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [production, staging, development]
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC for ECS and RDS deployment
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: First private subnet for multi-AZ
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Description: Second private subnet for multi-AZ
+
+  DBMasterUsername:
+    Type: String
+    Default: ibr_admin
+    NoEcho: true
+
+  DBMasterPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 12
+
+  ContainerImage:
+    Type: String
+    Description: ECR image URI for the web application
+
+  NotificationEmail:
+    Type: String
+    Description: Email for pipeline notifications
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label: {default: Network}
+        Parameters: [VpcId, PrivateSubnet1, PrivateSubnet2]
+      - Label: {default: Database}
+        Parameters: [DBMasterUsername, DBMasterPassword]
+      - Label: {default: Application}
+        Parameters: [Environment, ContainerImage, NotificationEmail]
+
+Resources:
+
+  # ───────────────────────────── S3 Bucket ─────────────────────────────
+
+  DataBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "ibr-defect-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref DataEncryptionKey
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveOldReports
+            Status: Enabled
+            Prefix: reports/
+            Transitions:
+              - StorageClass: GLACIER
+                TransitionInDays: 365
+          - Id: CleanupTempFiles
+            Status: Enabled
+            Prefix: temp/
+            ExpirationInDays: 7
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: "s3:ObjectCreated:Put"
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: data/
+                  - Name: suffix
+                    Value: .ply
+            Function: !GetAtt PipelineTriggerLambda.Arn
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+        - {Key: Environment, Value: !Ref Environment}
+
+  DataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DataBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: EnforceTLS
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt DataBucket.Arn
+              - !Sub "${DataBucket.Arn}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": "false"
+          - Sid: DenyNonITARRegionAccess
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt DataBucket.Arn
+              - !Sub "${DataBucket.Arn}/*"
+            Condition:
+              StringNotEquals:
+                "aws:RequestedRegion":
+                  - us-east-1
+                  - us-west-2
+
+  DataEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: KMS key for IBR defect data encryption (ITAR)
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: RootAccountAccess
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: "kms:*"
+            Resource: "*"
+          - Sid: ECSTaskAccess
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt ECSTaskRole.Arn
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: "*"
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  DataEncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/ibr-defect-${Environment}"
+      TargetKeyId: !Ref DataEncryptionKey
+
+  # ───────────────────────────── ECS Cluster & Service ─────────────────────────────
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "ibr-defect-${Environment}"
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: [ECSCluster]
+    Properties:
+      ServiceName: ibr-defect-web
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref ECSTaskDefinition
+      DesiredCount: 2
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+          SecurityGroups:
+            - !Ref WebAppSecurityGroup
+          AssignPublicIp: DISABLED
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: ibr-defect-web
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: "2048"
+      Memory: "4096"
+      ExecutionRoleArn: !GetAtt ECSExecutionRole.Arn
+      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+      ContainerDefinitions:
+        - Name: ibr-defect-web
+          Image: !Ref ContainerImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 8000
+              Protocol: tcp
+          Environment:
+            - {Name: AWS_REGION, Value: !Ref "AWS::Region"}
+            - {Name: S3_BUCKET, Value: !Ref DataBucket}
+            - {Name: DB_HOST, Value: !GetAtt ReportDatabase.Endpoint.Address}
+            - {Name: APP_ENV, Value: !Ref Environment}
+            - {Name: PROGRAM_ID, Value: F135}
+          Secrets:
+            - Name: DB_PASSWORD
+              ValueFrom: !Ref DBPasswordSecret
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref WebAppLogGroup
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: ecs
+          HealthCheck:
+            Command: ["CMD-SHELL", "curl -f http://localhost:8000/api/config || exit 1"]
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  WebAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for IBR defect web application
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          Description: Application port — restrict to internal ALB
+          CidrIp: 10.0.0.0/8
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS to AWS services
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          DestinationSecurityGroupId: !Ref DatabaseSecurityGroup
+          Description: PostgreSQL
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  # ───────────────────────────── RDS PostgreSQL ─────────────────────────────
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for IBR report database
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for IBR report database
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref WebAppSecurityGroup
+          Description: PostgreSQL from ECS tasks
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  ReportDatabase:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub "ibr-defect-${Environment}"
+      Engine: postgres
+      EngineVersion: "16.4"
+      DBInstanceClass: db.t3.medium
+      AllocatedStorage: 50
+      MaxAllocatedStorage: 200
+      StorageType: gp3
+      StorageEncrypted: true
+      KmsKeyId: !Ref DataEncryptionKey
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DatabaseSecurityGroup
+      MultiAZ: true
+      BackupRetentionPeriod: 30
+      DeletionProtection: true
+      EnablePerformanceInsights: true
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
+      CopyTagsToSnapshot: true
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  DBPasswordSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "ibr-defect/${Environment}/db-password"
+      Description: Database password for IBR defect report DB
+      SecretString: !Ref DBMasterPassword
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  # ───────────────────────────── SNS ─────────────────────────────
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "ibr-defect-notifications-${Environment}"
+      KmsMasterKeyId: !Ref DataEncryptionKey
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  NotificationSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref NotificationTopic
+      Protocol: email
+      Endpoint: !Ref NotificationEmail
+
+  # ───────────────────────────── Lambda Trigger ─────────────────────────────
+
+  PipelineTriggerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "ibr-pipeline-trigger-${Environment}"
+      Runtime: python3.12
+      Handler: lambda_trigger.handler
+      Code:
+        S3Bucket: !Sub "ibr-defect-deploy-${AWS::AccountId}"
+        S3Key: lambda/lambda_trigger.zip
+      Timeout: 60
+      MemorySize: 256
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          STATE_MACHINE_ARN: !Ref PipelineStateMachine
+          SNS_TOPIC_ARN: !Ref NotificationTopic
+          AWS_REGION_OVERRIDE: !Ref "AWS::Region"
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  LambdaS3Permission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PipelineTriggerLambda
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt DataBucket.Arn
+      SourceAccount: !Ref "AWS::AccountId"
+
+  PipelineStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub "ibr-defect-pipeline-${Environment}"
+      RoleArn: !GetAtt StepFunctionsRole.Arn
+      DefinitionS3Location:
+        Bucket: !Sub "ibr-defect-deploy-${AWS::AccountId}"
+        Key: stepfunctions/step_functions_workflow.json
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  # ───────────────────────────── CloudWatch ─────────────────────────────
+
+  WebAppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/ibr-defect-web
+      RetentionInDays: 90
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  PipelineLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/ibr-defect-pipeline
+      RetentionInDays: 90
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  MonitoringDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "IBR-Defect-${Environment}"
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0, "y": 0, "width": 12, "height": 6,
+              "properties": {
+                "title": "ECS Service Metrics",
+                "metrics": [
+                  ["AWS/ECS", "CPUUtilization", "ServiceName", "ibr-defect-web", "ClusterName", "ibr-defect-${Environment}"],
+                  ["AWS/ECS", "MemoryUtilization", "ServiceName", "ibr-defect-web", "ClusterName", "ibr-defect-${Environment}"]
+                ],
+                "period": 300,
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12, "y": 0, "width": 12, "height": 6,
+              "properties": {
+                "title": "Pipeline Execution Metrics",
+                "metrics": [
+                  ["IBRDefect", "PipelineExecutionTime", "Program", "F135"],
+                  ["IBRDefect", "DefectCount", "Program", "F135"],
+                  ["IBRDefect", "ErrorRate", "Program", "F135"]
+                ],
+                "period": 300,
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0, "y": 6, "width": 12, "height": 6,
+              "properties": {
+                "title": "RDS Database Metrics",
+                "metrics": [
+                  ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "ibr-defect-${Environment}"],
+                  ["AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", "ibr-defect-${Environment}"],
+                  ["AWS/RDS", "FreeStorageSpace", "DBInstanceIdentifier", "ibr-defect-${Environment}"]
+                ],
+                "period": 300,
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12, "y": 6, "width": 12, "height": 6,
+              "properties": {
+                "title": "ML Accuracy Tracking",
+                "metrics": [
+                  ["IBRDefect", "MLAccuracy", "Program", "F135"],
+                  ["IBRDefect", "MLPrecision", "Program", "F135"],
+                  ["IBRDefect", "MLRecall", "Program", "F135"]
+                ],
+                "period": 3600,
+                "region": "${AWS::Region}"
+              }
+            }
+          ]
+        }
+
+  HighCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "IBR-Defect-HighCPU-${Environment}"
+      AlarmDescription: ECS service CPU exceeds 80%
+      Namespace: AWS/ECS
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: ServiceName
+          Value: ibr-defect-web
+        - Name: ClusterName
+          Value: !Ref ECSCluster
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref NotificationTopic
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  PipelineErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "IBR-Defect-PipelineErrors-${Environment}"
+      AlarmDescription: Pipeline error rate exceeds 5% in 15 minutes
+      Namespace: IBRDefect
+      MetricName: ErrorRate
+      Dimensions:
+        - Name: Program
+          Value: F135
+      Statistic: Average
+      Period: 900
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref NotificationTopic
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  DatabaseStorageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "IBR-Defect-DBStorage-${Environment}"
+      AlarmDescription: RDS free storage below 5 GB
+      Namespace: AWS/RDS
+      MetricName: FreeStorageSpace
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref ReportDatabase
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5368709120
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Ref NotificationTopic
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  # ───────────────────────────── IAM Roles ─────────────────────────────
+
+  ECSExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "ibr-defect-ecs-execution-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: SecretsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref DBPasswordSecret
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "ibr-defect-ecs-task-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: S3DataAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt DataBucket.Arn
+                  - !Sub "${DataBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:GenerateDataKey
+                Resource:
+                  - !GetAtt DataEncryptionKey.Arn
+        - PolicyName: CloudWatchMetrics
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    "cloudwatch:namespace": IBRDefect
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "ibr-defect-lambda-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: PipelineTriggerPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:HeadObject
+                Resource:
+                  - !Sub "${DataBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource:
+                  - !Ref PipelineStateMachine
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref NotificationTopic
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource:
+                  - !GetAtt DataEncryptionKey.Arn
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  StepFunctionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "ibr-defect-sfn-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionsPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:ibr-*"
+              - Effect: Allow
+                Action:
+                  - ecs:RunTask
+                  - ecs:StopTask
+                  - ecs:DescribeTasks
+                Resource: "*"
+                Condition:
+                  ArnEquals:
+                    "ecs:cluster": !GetAtt ECSCluster.Arn
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt ECSExecutionRole.Arn
+                  - !GetAtt ECSTaskRole.Arn
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref NotificationTopic
+              - Effect: Allow
+                Action:
+                  - events:PutTargets
+                  - events:PutRule
+                  - events:DescribeRule
+                Resource:
+                  - !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventsForECSTaskRule"
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+  RDSMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "ibr-defect-rds-monitoring-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: monitoring.rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+      Tags:
+        - {Key: Program, Value: F135}
+        - {Key: Classification, Value: ITAR}
+
+Outputs:
+  DataBucketName:
+    Description: S3 bucket for PLY data and reports
+    Value: !Ref DataBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-DataBucket"
+
+  DataBucketArn:
+    Description: S3 bucket ARN
+    Value: !GetAtt DataBucket.Arn
+
+  ECSClusterName:
+    Description: ECS cluster name
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub "${AWS::StackName}-ECSCluster"
+
+  ECSServiceName:
+    Description: ECS service name
+    Value: !GetAtt ECSService.Name
+
+  DatabaseEndpoint:
+    Description: RDS PostgreSQL endpoint
+    Value: !GetAtt ReportDatabase.Endpoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-DBEndpoint"
+
+  DatabasePort:
+    Description: RDS PostgreSQL port
+    Value: !GetAtt ReportDatabase.Endpoint.Port
+
+  SNSTopicArn:
+    Description: SNS topic for pipeline notifications
+    Value: !Ref NotificationTopic
+    Export:
+      Name: !Sub "${AWS::StackName}-SNSTopic"
+
+  StateMachineArn:
+    Description: Step Functions state machine ARN
+    Value: !Ref PipelineStateMachine
+    Export:
+      Name: !Sub "${AWS::StackName}-StateMachine"
+
+  DashboardURL:
+    Description: CloudWatch dashboard URL
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=IBR-Defect-${Environment}"

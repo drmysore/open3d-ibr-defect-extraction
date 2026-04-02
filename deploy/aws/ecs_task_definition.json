@@ -1,0 +1,142 @@
+{
+  "_comment": [
+    "ECS Fargate Task Definition — IBR Defect Extraction System",
+    "Author: Supreeth Mysore",
+    "Program: F135 | Classification: ITAR",
+    "",
+    "ITAR NOTICE: This task definition deploys software that processes",
+    "technical data subject to the International Traffic in Arms Regulations",
+    "(ITAR), 22 CFR Parts 120-130. Access is restricted to U.S. Persons",
+    "as defined in 22 CFR 120.15. This workload MUST execute in ITAR-compliant",
+    "AWS regions (us-east-1 or us-west-2) using GovCloud where required.",
+    "Unauthorized export or transfer of this technical data is prohibited."
+  ],
+  "family": "ibr-defect-web",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "2048",
+  "memory": "4096",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ibr-defect-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ibr-defect-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "ibr-defect-web",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/ibr-defect-web:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "AWS_REGION",
+          "value": "${AWS_REGION}"
+        },
+        {
+          "name": "S3_BUCKET",
+          "value": "${S3_BUCKET}"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "${DB_HOST}"
+        },
+        {
+          "name": "APP_ENV",
+          "value": "production"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "value": "INFO"
+        },
+        {
+          "name": "PIPELINE_CONFIG_PATH",
+          "value": "/app/config/pipeline_config.yaml"
+        },
+        {
+          "name": "PROGRAM_ID",
+          "value": "F135"
+        },
+        {
+          "name": "ITAR_COMPLIANT",
+          "value": "true"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:ibr-defect/db-password"
+        },
+        {
+          "name": "SNS_TOPIC_ARN",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:ibr-defect/sns-topic-arn"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/ibr-defect-web",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8000/api/config || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "ulimits": [
+        {
+          "name": "nofile",
+          "softLimit": 65536,
+          "hardLimit": 65536
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "ply-data",
+          "containerPath": "/app/data",
+          "readOnly": false
+        },
+        {
+          "sourceVolume": "output",
+          "containerPath": "/app/output",
+          "readOnly": false
+        }
+      ],
+      "linuxParameters": {
+        "initProcessEnabled": true
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "ply-data",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "${EFS_FILE_SYSTEM_ID}",
+        "rootDirectory": "/ply-data",
+        "transitEncryption": "ENABLED"
+      }
+    },
+    {
+      "name": "output",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "${EFS_FILE_SYSTEM_ID}",
+        "rootDirectory": "/output",
+        "transitEncryption": "ENABLED"
+      }
+    }
+  ],
+  "tags": [
+    {"key": "Program", "value": "F135"},
+    {"key": "Classification", "value": "ITAR"},
+    {"key": "Component", "value": "ibr-defect-web"},
+    {"key": "ManagedBy", "value": "cloudformation"},
+    {"key": "Author", "value": "Supreeth Mysore"}
+  ]
+}
